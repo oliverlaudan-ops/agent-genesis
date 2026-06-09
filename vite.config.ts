@@ -2,6 +2,10 @@ import { defineConfig } from 'vite';
 import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
+  // When deployed to a custom domain (genesis.future-pulse.de), use '/' as the base.
+  // For the fallback URL (oliverlaudan-ops.github.io/agent-genesis/) we'd need
+  // '/agent-genesis/' — but since we're going custom-domain from day 1, '/' is correct.
+  base: '/',
   resolve: {
     alias: {
       '@core': fileURLToPath(new URL('./src/core', import.meta.url)),
