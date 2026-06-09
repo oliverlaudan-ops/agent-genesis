@@ -1,0 +1,1 @@
+export { VizModule } from './VizModule';

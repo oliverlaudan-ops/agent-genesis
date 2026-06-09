@@ -1,0 +1,186 @@
+:root {
+  --bg: #0b0d12;
+  --bg-elev: #131722;
+  --bg-elev-2: #1b2030;
+  --fg: #e6e9ef;
+  --fg-dim: #9aa3b2;
+  --accent: #4cc9f0;
+  --accent-2: #f72585;
+  --good: #4ade80;
+  --warn: #facc15;
+  --bad: #f87171;
+  --border: #232a3d;
+  --radius: 8px;
+  --gap: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  overflow: hidden;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+}
+
+.app-header {
+  padding: 12px 20px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}
+
+.app-header .tagline {
+  margin: 0;
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+
+#game-root {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  gap: var(--gap);
+  padding: var(--gap);
+  overflow: hidden;
+}
+
+.panel {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.panel h2 {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--fg-dim);
+}
+
+.resource-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 8px;
+  background: var(--bg-elev-2);
+  border-radius: 6px;
+}
+
+.resource-row .name {
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+
+.resource-row .value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.resource-row .rate {
+  font-size: 11px;
+  color: var(--good);
+  margin-left: 6px;
+}
+
+.building-card,
+.agent-card {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.building-card .title,
+.agent-card .title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.building-card .meta,
+.agent-card .meta {
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+
+button {
+  cursor: pointer;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: #232a3d;
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #0b0d12;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+button.primary:hover:not(:disabled) {
+  background: #6dd5f5;
+}
+
+#viz-canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, #131722 0%, #0b0d12 100%);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.app-footer {
+  padding: 6px 20px;
+  background: var(--bg-elev);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
