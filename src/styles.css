@@ -12,6 +12,12 @@
   --border: #232a3d;
   --radius: 8px;
   --gap: 12px;
+  /* Safe-area insets for iOS notch / home indicator. Set by the env() functions
+     and consumed as padding on header/footer. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   color-scheme: dark;
@@ -26,24 +32,36 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
+  /* 100dvh where supported (handles mobile browser chrome appearing/disappearing
+     as the user scrolls), 100vh as fallback for older WebViews. */
+  height: 100dvh;
   background: var(--bg);
   color: var(--fg);
   overflow: hidden;
+  /* Prevent pull-to-refresh / overscroll from interfering with the canvas. */
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Disable text-selection by default — game UI shouldn't be selectable. */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 #app {
   display: grid;
+  /* Header | Main | Footer. Header and footer respect safe-area insets. */
   grid-template-rows: auto 1fr auto;
-  height: 100vh;
+  height: 100%;
 }
 
 .app-header {
-  padding: 12px 20px;
+  padding: calc(8px + var(--safe-top)) calc(16px + var(--safe-right)) 8px
+    calc(16px + var(--safe-left));
   background: var(--bg-elev);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: baseline;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .app-header h1 {
@@ -57,6 +75,9 @@ body {
   margin: 0;
   font-size: 12px;
   color: var(--fg-dim);
+  /* Don't let the tagline dominate narrow widths. */
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 #game-root {
@@ -65,6 +86,7 @@ body {
   gap: var(--gap);
   padding: var(--gap);
   overflow: hidden;
+  min-height: 0; /* allow children to scroll inside the grid cell */
 }
 
 .panel {
@@ -76,6 +98,10 @@ body {
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
+  /* Smooth scrolling on iOS. */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent panel-scroll from triggering body overscroll. */
+  overscroll-behavior: contain;
 }
 
 .panel h2 {
@@ -143,6 +169,10 @@ button {
   border-radius: 6px;
   font-size: 12px;
   transition: background 0.15s, border-color 0.15s;
+  /* Better touch target on mobile. */
+  min-height: 32px;
+  /* iOS: don't show callout on long-press. */
+  -webkit-touch-callout: none;
 }
 
 button:hover:not(:disabled) {
@@ -173,14 +203,135 @@ button.primary:hover:not(:disabled) {
   background: radial-gradient(ellipse at center, #131722 0%, #0b0d12 100%);
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  /* Disable touch gestures from triggering browser navigation. */
+  touch-action: none;
 }
 
 .app-footer {
-  padding: 6px 20px;
+  padding: 6px calc(16px + var(--safe-right)) calc(6px + var(--safe-bottom))
+    calc(16px + var(--safe-left));
   background: var(--bg-elev);
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   font-size: 11px;
   color: var(--fg-dim);
+  gap: 12px;
+}
+
+/* ----------------------------------------------------------------------------
+   Mobile layout (≤ 900px wide)
+   ----------------------------------------------------------------------------
+   On phones, the 3-column desktop layout (left panel + viz + right panel)
+   collapses into a vertical stack: viz on top, panel below, with a tab
+   strip to switch between Resources, Buildings, Agents, Controls. This is
+   the standard pattern for idle/incremental games that need to keep all
+   state visible without horizontal scrolling. */
+
+@media (max-width: 900px) {
+  #game-root {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 40vh) minmax(0, 1fr);
+    /* Tighter padding on small screens. */
+    padding: 8px;
+    gap: 8px;
+  }
+
+  /* Reorder: viz stays on top, then the panel stack below. The desktop layout
+     has [left, viz, right] — on mobile we want [viz, panel]. Hide the left
+     panel (it gets rendered into a tab below) and let the right panel become
+     the single panel that hosts tabs. The JS in main.ts decides what to render
+     where; on mobile, both left-panel and right-panel content are merged into
+     one tabbed panel. The CSS just makes the visual layout work. */
+  #left-panel,
+  #right-panel {
+    /* When both panels are visible, stack them into tabs (handled in main.ts).
+       Here we just make sure the default 3-column CSS doesn't apply. */
+    min-height: 0;
+  }
+
+  /* The viz panel keeps its aspect-ish ratio (40vh). */
+  #viz-panel {
+    min-height: 0;
+  }
+
+  /* On mobile, the panels become tabbed. We style the active state. */
+  .panel {
+    /* Slightly tighter padding for mobile. */
+    padding: 10px;
+  }
+
+  .app-header {
+    /* Slightly more compact header on mobile. */
+    padding: calc(8px + var(--safe-top)) 12px 6px 12px;
+    gap: 4px;
+  }
+
+  .app-header h1 {
+    font-size: 16px;
+  }
+
+  .app-header .tagline {
+    /* The tagline is noise on small screens. */
+    display: none;
+  }
+
+  .app-footer {
+    /* Smaller font + tighter gap. */
+    font-size: 10px;
+    padding: 4px 12px calc(4px + var(--safe-bottom)) 12px;
+  }
+}
+
+/* Extra-small phones (≤ 480px): tighten everything further. */
+@media (max-width: 480px) {
+  #game-root {
+    grid-template-rows: minmax(0, 36vh) minmax(0, 1fr);
+    padding: 6px;
+    gap: 6px;
+  }
+  .panel {
+    padding: 8px;
+    gap: 8px;
+  }
+}
+
+/* Tab strip (mobile only). The tab buttons are rendered by main.ts and only
+   shown when the viewport is narrow. We add a `data-mobile-tabs` attribute
+   on the right panel to opt-in. */
+.mobile-tabs {
+  display: none;
+  gap: 4px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.mobile-tabs button {
+  flex: 1;
+  font-size: 11px;
+  padding: 6px 4px;
+  min-height: 36px; /* comfortable thumb target */
+}
+
+.mobile-tabs button.active {
+  background: var(--accent);
+  color: #0b0d12;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .mobile-tabs {
+    display: flex;
+  }
+  /* Tab content is hidden by data-tab attribute (set in JS). */
+  .panel [data-tab] {
+    display: none;
+  }
+  .panel [data-tab].active {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
 }

@@ -22,6 +22,35 @@ export default defineConfig({
     sourcemap: true,
     target: 'es2022',
   },
+  plugins: [
+    {
+      // Compile src/sw.ts → /sw.js at the root of dist/. We DON'T want it
+      // bundled into the main app (Vite would hash the filename and break
+      // the registration in main.ts which references '/sw.js' literally).
+      // So we run a separate esbuild pass and write the output manually.
+      name: 'build-sw',
+      apply: 'build',
+      closeBundle: {
+        order: 'post',
+        async handler() {
+          // Dynamic import of esbuild — vite config is ESM, so `require`
+          // doesn't exist. esbuild is a Vite dep so it's resolvable from
+          // the config context.
+          const { build } = await import('esbuild');
+          await build({
+            entryPoints: [fileURLToPath(new URL('./src/sw.ts', import.meta.url))],
+            bundle: true,
+            minify: true,
+            target: 'es2020',
+            format: 'iife',
+            platform: 'browser',
+            outfile: fileURLToPath(new URL('./dist/sw.js', import.meta.url)),
+            logLevel: 'error',
+          });
+        },
+      },
+    },
+  ],
   test: {
     globals: true,
     environment: 'jsdom',

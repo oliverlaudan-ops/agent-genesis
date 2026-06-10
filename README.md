@@ -15,6 +15,27 @@ You're running an AI research lab. You stream data, spin up GPU racks, train spe
 - **Tests:** Vitest + jsdom
 - **Lint:** ESLint + Prettier
 - **Persistence:** LocalStorage + JSON export/import (no backend)
+- **PWA:** Service Worker (cache-first for static assets) + Web App Manifest
+
+## PWA
+
+Agent Genesis installs as a standalone app (Add to Home Screen on iOS/Android,
+install icon in Chrome/Edge). Once installed:
+
+- Loads from cache, so it works offline after the first visit
+- Runs in fullscreen / no browser chrome
+- Saves (LocalStorage) are not affected by the SW — SW only caches the
+  static app shell, not user data
+
+To install on iOS: open the live demo in Safari, tap the Share button, then
+"Add to Home Screen". On Android: Chrome menu → "Install app".
+
+## Mobile
+
+Responsive layout: on phones (≤ 900px), the three-column desktop layout
+collapses to a viz-on-top + tabbed-panel-below design. Resources, Buildings,
+Agents, and Controls live behind a tab strip. Safe-area insets are respected
+on notched devices.
 
 ## Architecture
 
@@ -55,6 +76,8 @@ npm run typecheck
 ## Roadmap (high level)
 
 - [x] v0.1 — Core loop, resources, buildings, agents, particle viz, save/load/export
+- [x] v0.1.1 — PWA (manifest, icons, service worker, installable)
+- [x] v0.1.2 — Mobile responsive layout (tabbed panel under viz on small screens)
 - [ ] v0.2 — Research tree, more buildings, agent production wiring
 - [ ] v0.3 — Prestige layer (Realignment)
 - [ ] v0.4 — Achievements + statistics
