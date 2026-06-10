@@ -294,6 +294,13 @@ button.primary:hover:not(:disabled) {
     gap: 8px;
   }
 
+  /* Stats bar collapses to a 2×2 grid for the entire mobile range. We
+     deliberately don't try to keep 1×4 on wide tablets here — the bar is
+     a glanceable HUD and reading 2 columns is calmer than squeezing 4. */
+  #stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   #viz-panel,
   #left-panel,
   #right-panel,
@@ -324,7 +331,8 @@ button.primary:hover:not(:disabled) {
   }
 }
 
-/* Extra-small phones (≤ 480px): tighter spacing, 2×2 stats grid. */
+/* Extra-small phones (≤ 480px): tighter spacing. The 2×2 stats grid is set
+   in the ≤900px block above and applies to the whole mobile range. */
 @media (max-width: 480px) {
   #game-root {
     grid-template-rows: minmax(0, 36vh) minmax(0, 1fr);
@@ -334,9 +342,6 @@ button.primary:hover:not(:disabled) {
   .panel {
     padding: 8px;
     gap: 8px;
-  }
-  #stats-bar {
-    grid-template-columns: repeat(2, 1fr);
   }
   .stats-item {
     padding: 6px 10px;
