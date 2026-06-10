@@ -6,13 +6,13 @@
   "description": "Modular AI-agent idle/incremental game. Train, evolve, and visualize autonomous agents as living particle systems.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && tsc -p tsconfig.sw.json --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.sw.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
