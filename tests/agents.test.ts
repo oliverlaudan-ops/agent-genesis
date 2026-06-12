@@ -78,4 +78,18 @@ describe('AgentsModule', () => {
     // No per-resource boost from the planner.
     expect(res.getAgentMultFor('compute')).toBe(0);
   });
+
+  it('emits a final agent:trained with progress=0 when training finishes', () => {
+    res.add('data', 1000);
+    res.add('compute', 1000);
+    const reasoner = AGENT_DEFS.find((a) => a.id === 'reasoner')!;
+    ag.startTraining('reasoner');
+    const events: Array<{ id: string; progress: number }> = [];
+    game.bus.on('agent:trained', (e: { id: string; progress: number }) => events.push(e));
+    ag.tick(reasoner.trainingTime + 1); // crosses the 1.0 boundary this tick
+    const last = events[events.length - 1];
+    expect(last).toBeDefined();
+    expect(last.id).toBe('reasoner');
+    expect(last.progress).toBe(0);
+  });
 });
