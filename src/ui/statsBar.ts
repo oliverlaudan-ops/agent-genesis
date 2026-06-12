@@ -32,12 +32,13 @@ export function renderStatsBar(host: HTMLElement, game: Game): void {
   const res = game.modules.get('resources') as ResourcesModule | undefined;
   if (!res) return;
 
-  let bar = host.querySelector<HTMLElement>('.stats-bar');
-  if (!bar) {
-    bar = document.createElement('div');
-    bar.className = 'stats-bar';
-    host.appendChild(bar);
-  }
+  // The host element IS the stats bar (main.ts creates it with
+  // id="stats-bar" and inserts it into #app). Reuse it directly — wrapping
+  // it in a child <div class="stats-bar"> would break the grid layout,
+  // because the CSS targets #stats-bar as the grid container and a single
+  // child wrapper would collapse to one cell with the items stacked inside
+  // it as a normal block.
+  const bar = host;
   // Replace children each tick — N is small (4) and the per-tick DOM cost
   // is negligible. Avoids any diff/staleness logic.
   bar.innerHTML = '';
