@@ -59,3 +59,35 @@ describe('BuildingsModule', () => {
     expect(secondCost.capital).toBe(Math.ceil(baseCost * 1.15));
   });
 });
+
+describe('BuildingsModule + AgentsModule integration', () => {
+  it('agent population multiplies the corresponding resource rate', async () => {
+    const game = new Game();
+    const res = new ResourcesModule();
+    const bld = new BuildingsModule();
+    const { AgentsModule, AGENT_DEFS } = await import('../src/modules/agents/AgentsModule');
+    const ag = new AgentsModule();
+    game.register(res);
+    game.register(ag);
+    game.register(bld);
+    await game.boot();
+
+    // Baseline: one GPU Rack (produces 0.4 Compute/s) with no agents.
+    res.add('capital', 1000);
+    res.add('data', 1000);
+    bld.purchase('gpu-rack');
+    bld.tick(0.1);
+    const baseline = res.getRate('compute');
+
+    // Train two Reasoners — each adds 0.25 multiplier to compute, so the
+    // 0.4/s rate should be multiplied by 1.5 = 0.6/s.
+    const reasoner = AGENT_DEFS.find((a) => a.id === 'reasoner')!;
+    ag.startTraining('reasoner');
+    ag.tick(reasoner.trainingTime + 1);
+    ag.startTraining('reasoner');
+    ag.tick(reasoner.trainingTime + 1);
+    ag.tick(0.001); // publish boosts
+    bld.tick(0.1); // recompute rate
+    expect(res.getRate('compute')).toBeCloseTo(baseline * 1.5, 5);
+  });
+});

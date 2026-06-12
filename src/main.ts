@@ -193,8 +193,8 @@ function setupLayout(layoutKind: Layout): void {
 // ---------------------------------------------------------------------------
 const game = new Game();
 game.register(new ResourcesModule());
-game.register(new BuildingsModule());
 game.register(new AgentsModule());
+game.register(new BuildingsModule());
 game.register(new VizModule(panelLayout.canvas));
 
 const tickRateEl = document.getElementById('tick-rate')!;

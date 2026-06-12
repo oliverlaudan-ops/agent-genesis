@@ -22,8 +22,17 @@ export interface AgentDef {
   trainingCost: Partial<Record<string, number>>;
   /** real seconds of training to become productive */
   trainingTime: number;
-  /** resource produced per second once trained */
-  produces: { resourceId: string; amount: number };
+  /**
+   * What this agent does once trained: it multiplies the per-second
+   * production rate of `boosts.resourceId` by `1 + boosts.multiplierPerAgent
+   * * population`. Stacks linearly with population.
+   *
+   * Example: a Reasoner boosts Compute with multiplierPerAgent=0.25. With
+   * 4 trained Reasoners, the Compute rate is multiplied by 2.0.
+   *
+   * For `planner`, set `resourceId: '*'` to apply to every resource.
+   */
+  boosts: { resourceId: string | '*'; multiplierPerAgent: number };
   /** color for the particle cloud */
   color: string;
   /** base size of cloud in pixels (viz will scale by population) */
@@ -36,10 +45,10 @@ export const AGENT_DEFS: AgentDef[] = [
   {
     id: 'reasoner',
     name: 'Reasoner',
-    description: 'Strong at math and logic. Trains on data, produces compute.',
+    description: 'Strong at math and logic. Trains on data, amplifies Compute production.',
     trainingCost: { data: 30, compute: 10 },
     trainingTime: 8,
-    produces: { resourceId: 'compute', amount: 0.3 },
+    boosts: { resourceId: 'compute', multiplierPerAgent: 0.25 },
     color: '#4cc9f0',
     baseSize: 60,
     motion: 'orbit',
@@ -47,10 +56,10 @@ export const AGENT_DEFS: AgentDef[] = [
   {
     id: 'coder',
     name: 'Coder',
-    description: 'Turns compute into capital. Pure utility.',
+    description: 'Turns compute into capital. Each trained Coder amplifies Capital production.',
     trainingCost: { compute: 25, data: 10 },
     trainingTime: 12,
-    produces: { resourceId: 'capital', amount: 0.15 },
+    boosts: { resourceId: 'capital', multiplierPerAgent: 0.3 },
     color: '#facc15',
     baseSize: 70,
     motion: 'drift',
@@ -58,10 +67,10 @@ export const AGENT_DEFS: AgentDef[] = [
   {
     id: 'vision',
     name: 'Vision',
-    description: 'Trains slowly but unlocks high-alignment research paths.',
+    description: 'Trains slowly but amplifies Alignment Lab output, pushing the soft cap toward 1.0.',
     trainingCost: { compute: 40, data: 50 },
     trainingTime: 20,
-    produces: { resourceId: 'alignment', amount: 0.002 },
+    boosts: { resourceId: 'alignment', multiplierPerAgent: 0.4 },
     color: '#4ade80',
     baseSize: 80,
     motion: 'pulse',
@@ -69,10 +78,10 @@ export const AGENT_DEFS: AgentDef[] = [
   {
     id: 'planner',
     name: 'Planner',
-    description: 'Meta-agent. Boosts every other agent once trained.',
+    description: 'Meta-agent. Each Planner amplifies every other agent’s boost.',
     trainingCost: { compute: 60, data: 40, capital: 20 },
     trainingTime: 30,
-    produces: { resourceId: 'compute', amount: 0.5 },
+    boosts: { resourceId: '*', multiplierPerAgent: 0.15 },
     color: '#a78bfa',
     baseSize: 90,
     motion: 'spiral',
@@ -120,9 +129,29 @@ export class AgentsModule implements GameModule {
       }
     }
 
-    // Agents are not yet wired into the resource production loop.
-    // v1 keeps them as a research/visualization layer; production comes
-    // from buildings. v2 will let trained agents modify building rates.
+    // Publish our current boost multipliers to the resources module so
+    // BuildingsModule (which ticks after us, see Game module order) can
+    // apply them on top of building output. We don't multiply here directly
+    // — the resources module is the single source of truth for rates and
+    // gets reset by BuildingsModule each tick anyway.
+    //
+    // Formula: per resource, multiplier = 1 + sum over agents that target
+    // that resource of (multiplierPerAgent * pop). The Planner (resourceId
+    // '*') contributes additively to a "global" multiplier that gets folded
+    // in by BuildingsModule.
+    const perResource: Record<string, number> = {};
+    let globalMult = 1;
+    for (const def of AGENT_DEFS) {
+      const pop = this.state.population[def.id] ?? 0;
+      if (pop === 0) continue;
+      if (def.boosts.resourceId === '*') {
+        globalMult += def.boosts.multiplierPerAgent * pop;
+      } else {
+        const rid = def.boosts.resourceId;
+        perResource[rid] = (perResource[rid] ?? 0) + def.boosts.multiplierPerAgent * pop;
+      }
+    }
+    this.resources.setAgentBoosts(perResource, globalMult);
   }
 
   population(id: AgentArchetype): number {
