@@ -32,6 +32,14 @@ export const RESOURCE_DEFS: ResourceDef[] = [
 interface ResourcesState {
   amounts: Record<string, number>;
   rates: Record<string, number>;
+  /**
+   * Multipliers applied on top of building-derived base rates. Populated by
+   * AgentsModule each tick. Read by BuildingsModule to compose the final
+   * rate. We store additive (1 + sum) so the consumer can multiply.
+   */
+  agentMultPerResource: Record<string, number>;
+  /** Multiplier applied to every resource (Planners). 1.0 = no boost. */
+  agentGlobalMult: number;
 }
 
 export class ResourcesModule implements GameModule {
@@ -40,6 +48,8 @@ export class ResourcesModule implements GameModule {
   private state: ResourcesState = {
     amounts: { compute: 50, data: 25, capital: 10, alignment: 0.5 },
     rates: { compute: 0, data: 0, capital: 0, alignment: 0 },
+    agentMultPerResource: {},
+    agentGlobalMult: 1,
   };
 
   init(_game: Game): void {
@@ -71,6 +81,26 @@ export class ResourcesModule implements GameModule {
 
   setRate(id: string, rate: number): void {
     this.state.rates[id] = rate;
+  }
+
+  /**
+   * Called by AgentsModule each tick. The multipliers are applied by
+   * BuildingsModule on top of the building-derived rate, so we just store
+   * them here for the next composition pass.
+   */
+  setAgentBoosts(perResource: Record<string, number>, globalMult: number): void {
+    this.state.agentMultPerResource = { ...perResource };
+    this.state.agentGlobalMult = globalMult;
+  }
+
+  /** Per-resource additive multiplier (1.0 = no boost). */
+  getAgentMultFor(id: string): number {
+    return this.state.agentMultPerResource[id] ?? 0;
+  }
+
+  /** Global additive multiplier from meta-agents (Planners). 1.0 = none. */
+  getAgentGlobalMult(): number {
+    return this.state.agentGlobalMult;
   }
 
   add(id: string, amount: number): void {

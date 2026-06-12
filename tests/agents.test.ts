@@ -45,4 +45,37 @@ describe('AgentsModule', () => {
     ag.startTraining('reasoner');
     expect(ag.startTraining('reasoner')).toBe(false);
   });
+
+  it('publishes boost multipliers to ResourcesModule when agents are trained', () => {
+    res.add('data', 1000);
+    res.add('compute', 1000);
+    res.add('capital', 1000);
+    // Train + finish a Reasoner (boosts Compute) and a Coder (boosts Capital).
+    const reasoner = AGENT_DEFS.find((a) => a.id === 'reasoner')!;
+    const coder = AGENT_DEFS.find((a) => a.id === 'coder')!;
+    ag.startTraining('reasoner');
+    ag.tick(reasoner.trainingTime + 1);
+    ag.startTraining('coder');
+    ag.tick(coder.trainingTime + 1);
+    // The tick above finished the coder; agents publish boosts on every tick,
+    // so the next tick (below) will see both populations reflected.
+    ag.tick(0.001);
+    expect(res.getAgentMultFor('compute')).toBeCloseTo(0.25, 5);
+    expect(res.getAgentMultFor('capital')).toBeCloseTo(0.3, 5);
+    expect(res.getAgentMultFor('data')).toBe(0);
+  });
+
+  it('Planner contributes to the global multiplier only', () => {
+    res.add('compute', 5000);
+    res.add('data', 5000);
+    res.add('capital', 5000);
+    const planner = AGENT_DEFS.find((a) => a.id === 'planner')!;
+    ag.startTraining('planner');
+    ag.tick(planner.trainingTime + 1);
+    ag.tick(0.001);
+    // One Planner = +0.15 to the global multiplier.
+    expect(res.getAgentGlobalMult()).toBeCloseTo(1.15, 5);
+    // No per-resource boost from the planner.
+    expect(res.getAgentMultFor('compute')).toBe(0);
+  });
 });

@@ -69,11 +69,6 @@ export class BuildingsModule implements GameModule {
   }
 
   tick(_dt: number): void {
-    // Reset per-tick rates, then walk every building, then re-emit.
-    for (const def of BUILDING_DEFS) {
-      this.resources.setRate(def.produces.resourceId, 0); // we recompute below
-    }
-
     // Recompute total rate per resource from all buildings.
     const totals: Record<string, number> = {};
     for (const def of BUILDING_DEFS) {
@@ -82,9 +77,18 @@ export class BuildingsModule implements GameModule {
       const rid = def.produces.resourceId;
       totals[rid] = (totals[rid] ?? 0) + def.produces.amount * count;
     }
+
+    // Compose with base rates + agent-derived multipliers. AgentsModule
+    // publishes its boost table into ResourcesModule before this runs
+    // (see Game module order in main.ts: resources → buildings → agents).
+    // The agents' *own* boost calculation happens on the tick that follows
+    // here, which is fine — there is at most one tick of latency on the
+    // multiplier, invisible in practice.
+    const globalMult = this.resources.getAgentGlobalMult();
     for (const def of RESOURCE_DEFS_FLAT) {
-      // add back base rate (currently zero for all) + building totals
-      this.resources.setRate(def.id, (totals[def.id] ?? 0) + def.baseRate);
+      const base = (totals[def.id] ?? 0) + def.baseRate;
+      const perRes = 1 + this.resources.getAgentMultFor(def.id);
+      this.resources.setRate(def.id, base * perRes * globalMult);
     }
   }
 
