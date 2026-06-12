@@ -122,6 +122,10 @@ export class AgentsModule implements GameModule {
           this.state.trainingProgress[def.id] = 0;
           this.state.population[def.id] += 1;
           this.bus.emit('agent:created', { id: def.id, count: this.state.population[def.id] });
+          // Reset the cloud's training visual on the same frame the agent
+          // finishes — without this the viz would keep showing the last
+          // progress value forever.
+          this.bus.emit('agent:trained', { id: def.id, progress: 0 });
         } else {
           this.state.trainingProgress[def.id] = p;
           this.bus.emit('agent:trained', { id: def.id, progress: p });

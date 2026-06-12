@@ -25,6 +25,10 @@ interface Cloud {
   particles: Particle[];
   targetCount: number;
   currentCount: number;
+  /** 0..1, set by 'agent:trained' events; 0 when idle. */
+  training: number;
+  /** 0..2π phase, advances while training is active so the pulse looks alive. */
+  trainingPhase: number;
 }
 
 export class VizModule implements GameModule {
@@ -60,6 +64,8 @@ export class VizModule implements GameModule {
         particles: [],
         targetCount: 0,
         currentCount: 0,
+        training: 0,
+        trainingPhase: 0,
         // store center as a synthetic particle with angle=0; we use a fixed offset
         ...{ cx: cx + Math.cos(angle) * ringRadius, cy: cy + Math.sin(angle) * ringRadius },
       } as Cloud & { cx: number; cy: number });
@@ -72,10 +78,24 @@ export class VizModule implements GameModule {
       // 6 particles per agent, capped to keep the canvas sane
       cloud.targetCount = Math.min(600, (cloud.targetCount ?? 0) + 6);
     });
+
+    // Track in-progress training so we can pulse the cloud + draw a
+    // progress ring. 0 means idle.
+    this.bus.on('agent:trained', ({ id, progress }) => {
+      const cloud = this.clouds.get(id as AgentArchetype);
+      if (!cloud) return;
+      cloud.training = Math.max(0, Math.min(1, progress));
+    });
   }
 
   tick(_dt: number): void {
     this.rafOffset += _dt;
+    // Advance each cloud's training phase so the pulse looks alive.
+    // We only tick the phase while training > 0 to save a bit of work
+    // when the player is idle.
+    for (const cloud of this.clouds.values()) {
+      if (cloud.training > 0) cloud.trainingPhase += _dt * 2.2;
+    }
     this.draw();
   }
 
@@ -108,12 +128,17 @@ export class VizModule implements GameModule {
       }
 
       const c = cloud as Cloud & { cx: number; cy: number };
-      const baseSize = cloud.def.baseSize;
+      // Pulse the cloud while it is training. Adds 0..15% to the visible
+      // radius and brightens the glow, fading smoothly when training ends.
+      const pulseAmt = cloud.training; // 0..1
+      const pulse = 1 + 0.15 * pulseAmt * (0.5 + 0.5 * Math.sin(cloud.trainingPhase));
+      const baseSize = cloud.def.baseSize * pulse;
       const pop = want / 6; // 6 particles per agent
 
-      // soft glow background
+      // soft glow background — brighter while training
+      const glowAlpha = 0.18 + 0.22 * pulseAmt;
       const grad = ctx.createRadialGradient(c.cx, c.cy, 0, c.cx, c.cy, baseSize + pop * 0.6);
-      grad.addColorStop(0, this.withAlpha(cloud.def.color, 0.18));
+      grad.addColorStop(0, this.withAlpha(cloud.def.color, glowAlpha));
       grad.addColorStop(1, this.withAlpha(cloud.def.color, 0));
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -123,9 +148,34 @@ export class VizModule implements GameModule {
       // particles
       for (const p of cloud.particles) {
         const pos = this.positionFor(cloud.def, c.cx, c.cy, baseSize, pop, p, t);
-        ctx.fillStyle = this.withAlpha(cloud.def.color, p.alpha);
+        // Brighten particles during training so the cloud visibly 'wakes up'.
+        const a = Math.min(1, p.alpha + 0.3 * pulseAmt);
+        ctx.fillStyle = this.withAlpha(cloud.def.color, a);
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Progress ring while training. Drawn as a thick stroked arc that
+      // grows from 0% to 100% as the agent finishes its training time.
+      if (pulseAmt > 0) {
+        const ringR = baseSize + pop * 0.6 + 10;
+        const startAngle = -Math.PI / 2;
+        const endAngle = startAngle + Math.PI * 2 * pulseAmt;
+        ctx.strokeStyle = this.withAlpha(cloud.def.color, 0.85);
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(c.cx, c.cy, ringR, startAngle, endAngle);
+        ctx.stroke();
+
+        // Trailing dot at the tip of the arc — reinforces the 'something is
+        // happening' reading even at a glance.
+        const tipX = c.cx + Math.cos(endAngle) * ringR;
+        const tipY = c.cy + Math.sin(endAngle) * ringR;
+        ctx.fillStyle = this.withAlpha(cloud.def.color, 1);
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, 4, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -133,7 +183,13 @@ export class VizModule implements GameModule {
       ctx.fillStyle = '#e6e9ef';
       ctx.font = '11px -apple-system, system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`${cloud.def.name} · ${want / 6 | 0}`, c.cx, c.cy + baseSize + pop * 0.6 + 18);
+      const labelY = c.cy + baseSize + pop * 0.6 + 18;
+      const baseLabel = `${cloud.def.name} · ${want / 6 | 0}`;
+      ctx.fillText(
+        pulseAmt > 0 ? `${baseLabel} · training ${(pulseAmt * 100).toFixed(0)}%` : baseLabel,
+        c.cx,
+        labelY,
+      );
     }
 
     ctx.restore();
