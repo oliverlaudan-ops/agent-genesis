@@ -45,6 +45,13 @@ export function renderStatsBar(host: HTMLElement, game: Game): void {
   for (const def of RESOURCE_DEFS) {
     const amount = res.get(def.id);
     const rate = res.getRate(def.id);
+    // Effective multiplier on this resource from trained agents. Composed
+    // from the per-resource boost (Reasoner/Coder/Vision) AND the global
+    // multiplier (Planners). Stays at 1.0 when no agents are trained.
+    const perRes = 1 + res.getAgentMultFor(def.id);
+    const global = res.getAgentGlobalMult();
+    const mult = perRes * global;
+    const hasBoost = mult > 1.0001;
 
     const item = document.createElement('div');
     item.className = 'stats-item';
@@ -63,6 +70,17 @@ export function renderStatsBar(host: HTMLElement, game: Game): void {
     }
 
     item.append(top, sub);
+
+    // Show a small "×NN" multiplier chip in the corner when agents are
+    // boosting this resource. Hidden otherwise to keep the bar calm.
+    if (hasBoost) {
+      const chip = document.createElement('div');
+      chip.className = 'stats-mult';
+      chip.textContent = `×${mult.toFixed(2)}`;
+      chip.title = `Boosted by agents: ${((mult - 1) * 100).toFixed(0)}% over base`;
+      item.appendChild(chip);
+    }
+
     bar.appendChild(item);
   }
 }

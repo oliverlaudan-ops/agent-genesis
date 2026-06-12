@@ -42,6 +42,22 @@ export function renderAgentPanel(host: HTMLElement, game: Game): void {
       <div class="meta">${def.description}</div>
     `;
 
+    // Boost badge: shows the current effective multiplier for this agent's
+    // target. Stays visible at all times so the player can see at a glance
+    // which agents are doing work and how much. Greyed out at pop=0.
+    const boostBadge = document.createElement('div');
+    boostBadge.className = 'boost-badge';
+    const target = def.boosts.resourceId === '*'
+      ? 'all resources'
+      : resourceName(def.boosts.resourceId);
+    const perAgentPct = (def.boosts.multiplierPerAgent * 100).toFixed(0);
+    const effectiveMult = 1 + def.boosts.multiplierPerAgent * pop;
+    const effectivePct = ((effectiveMult - 1) * 100).toFixed(0);
+    boostBadge.innerHTML = pop > 0
+      ? `<span class="boost-active">+${effectivePct}%</span> ${target} <span class="boost-detail">(${perAgentPct}%/pop · ×${pop})</span>`
+      : `<span class="boost-idle">+${perAgentPct}%/pop</span> ${target}`;
+    card.appendChild(boostBadge);
+
     if (inTraining) {
       const bar = document.createElement('div');
       bar.style.cssText = 'height:6px;background:var(--bg-elev);border-radius:3px;overflow:hidden;';
