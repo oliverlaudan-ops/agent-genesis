@@ -58,6 +58,26 @@ describe('BuildingsModule', () => {
     const baseCost = BUILDING_DEFS[0].baseCost.capital!;
     expect(secondCost.capital).toBe(Math.ceil(baseCost * 1.15));
   });
+
+  it('has a VC Fund building that produces capital (closes early-game capital dead-end)', () => {
+    const vc = BUILDING_DEFS.find((b) => b.id === 'vc-fund');
+    expect(vc).toBeDefined();
+    expect(vc!.produces.resourceId).toBe('capital');
+    expect(vc!.produces.amount).toBeGreaterThan(0);
+    // affordable: needs 20 data, starter has 25
+    const ok = bld.purchase('vc-fund');
+    expect(ok).toBe(true);
+    expect(bld.count('vc-fund')).toBe(1);
+    bld.tick(0.1);
+    expect(res.getRate('capital')).toBeGreaterThan(0);
+  });
+
+  it('scales VC Fund cost by its own costMultiplier', () => {
+    bld.purchase('vc-fund');
+    const vc = BUILDING_DEFS.find((b) => b.id === 'vc-fund')!;
+    const secondCost = bld.costFor(vc);
+    expect(secondCost.data).toBe(Math.ceil(vc.baseCost.data! * vc.costMultiplier));
+  });
 });
 
 describe('BuildingsModule + AgentsModule integration', () => {
