@@ -146,6 +146,55 @@ body {
   white-space: nowrap;
 }
 
+/* Multiplier chip — appears in the top-right of a stats item when at least
+   one agent is boosting this resource. Positioned absolutely so the rest
+   of the item layout is undisturbed. */
+.stats-mult {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--accent);
+  background: rgba(76, 201, 240, 0.12);
+  border: 1px solid rgba(76, 201, 240, 0.4);
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: auto;
+}
+
+/* Boost badge inside an agent card. Shown for every agent, but styled
+   differently when no agents have been trained yet so it doesn't compete
+   with the Train button. */
+.boost-badge {
+  font-size: 11px;
+  color: var(--fg-dim);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.boost-badge .boost-active {
+  color: var(--good);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.boost-badge .boost-idle {
+  color: var(--fg-dim);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.boost-badge .boost-detail {
+  color: var(--fg-dim);
+  font-size: 10px;
+  opacity: 0.75;
+}
+
 /* ----------------------------------------------------------------------------
    Main game area (#game-root)
    ---------------------------------------------------------------------------- */
