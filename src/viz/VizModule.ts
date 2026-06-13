@@ -245,12 +245,27 @@ export class VizModule implements GameModule {
   }
 
   serialize(): unknown {
-    return { rafOffset: this.rafOffset };
+    const cloudCounts: Partial<Record<AgentArchetype, number>> = {};
+    for (const [id, cloud] of this.clouds.entries()) {
+      cloudCounts[id] = cloud.targetCount;
+    }
+    return { rafOffset: this.rafOffset, cloudCounts };
   }
 
   deserialize(data: unknown): void {
     if (typeof data !== 'object' || data === null) return;
-    const d = data as { rafOffset?: number };
+    const d = data as { rafOffset?: number; cloudCounts?: Partial<Record<AgentArchetype, number>> };
     if (typeof d.rafOffset === 'number') this.rafOffset = d.rafOffset;
+    if (d.cloudCounts) {
+      for (const [id, count] of Object.entries(d.cloudCounts)) {
+        const cloud = this.clouds.get(id as AgentArchetype);
+        if (cloud && typeof count === 'number') {
+          cloud.targetCount = Math.max(0, count);
+          // Snap currentCount to target so the cloud doesn't fade in from 0
+          // after a reload — players expect to see the same scene they left.
+          cloud.currentCount = cloud.targetCount;
+        }
+      }
+    }
   }
 }
