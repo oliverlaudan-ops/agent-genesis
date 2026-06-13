@@ -32,6 +32,14 @@ export const BUILDING_DEFS: BuildingDef[] = [
     produces: { resourceId: 'data', amount: 0.2 },
   },
   {
+    id: 'vc-fund',
+    name: 'VC Fund',
+    description: 'Deploys capital-seeking strategies. The only path to growing Capital.',
+    baseCost: { data: 20 },
+    costMultiplier: 1.2,
+    produces: { resourceId: 'capital', amount: 0.05 },
+  },
+  {
     id: 'gpu-rack',
     name: 'GPU Rack',
     description: 'Burns capital, generates compute. Pure throughput.',
