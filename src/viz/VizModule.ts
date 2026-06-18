@@ -86,6 +86,17 @@ export class VizModule implements GameModule {
       if (!cloud) return;
       cloud.training = Math.max(0, Math.min(1, progress));
     });
+
+    // Reset clouds when the agent run is reset (e.g. prestige realignment).
+    this.bus.on('agents:reset', () => {
+      for (const cloud of this.clouds.values()) {
+        cloud.targetCount = 0;
+        cloud.currentCount = 0;
+        cloud.particles.length = 0;
+        cloud.training = 0;
+        cloud.trainingPhase = 0;
+      }
+    });
   }
 
   tick(_dt: number): void {

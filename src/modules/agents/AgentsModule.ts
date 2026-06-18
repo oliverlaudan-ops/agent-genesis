@@ -216,6 +216,7 @@ export class AgentsModule implements GameModule {
   resetRun(): void {
     this.state.population = { reasoner: 0, coder: 0, vision: 0, planner: 0 };
     this.state.trainingProgress = { reasoner: 0, coder: 0, vision: 0, planner: 0 };
+    this.bus.emit('agents:reset', { population: { ...this.state.population } });
   }
 
   population(id: AgentArchetype): number {

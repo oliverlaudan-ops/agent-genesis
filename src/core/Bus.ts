@@ -26,6 +26,7 @@ export type EventMap = {
   // agents
   'agent:created': { id: string; count: number };
   'agent:trained': { id: string; progress: number };
+  'agents:reset': { population: Record<string, number> };
 
   // research
   'research:purchased': { id: string; rank: number };
