@@ -110,6 +110,9 @@ function buildDesktopLayout(): PanelLayout {
   rightPanel.appendChild(controlsHost);
 
   const prestigeHost = document.createElement('div');
+  prestigeHost.style.flex = '1 1 auto';
+  prestigeHost.style.minHeight = '0';
+  prestigeHost.style.overflowY = 'auto';
   rightPanel.appendChild(prestigeHost);
 
   root.append(leftPanel, vizPanel, rightPanel);

@@ -99,7 +99,7 @@ export class PrestigeModule implements GameModule {
   realignAllowed(): boolean {
     const capBonus = this.modules.resources?.getCapBonus('alignment') ?? 0;
     const totalBuildings = this.modules.buildings?.totalBuildings() ?? 0;
-    return capBonus > 0 && totalBuildings >= 50;
+    return capBonus > 0.0001 && totalBuildings >= 50;
   }
 
   /** Convert the current run into insight, reset the run, save, and emit bus events. */
