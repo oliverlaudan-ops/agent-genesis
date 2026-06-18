@@ -95,9 +95,9 @@ export const RESEARCH_DEFS: ResearchNode[] = [
     id: 'ethical-oversight',
     name: 'Ethical Oversight',
     description: 'Raises the alignment ceiling, allowing riskier research.',
-    baseCost: { alignment: 0.8, compute: 200 },
+    baseCost: { compute: 120, data: 100, capital: 60 },
     costMultiplier: 1.5,
-    maxRank: 3,
+    maxRank: 5,
     effect: { kind: 'resourceCapBonus', targetId: 'alignment', valuePerRank: 0.15 },
   },
   {
