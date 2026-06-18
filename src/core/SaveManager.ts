@@ -14,7 +14,7 @@
 import type { Game } from './Game';
 
 const STORAGE_KEY = 'agent-genesis:save:v1';
-const CURRENT_VERSION = 2 as const;
+const CURRENT_VERSION = 3 as const;
 
 export interface SaveBlob {
   v: number;
@@ -35,7 +35,7 @@ export class SaveManager {
   }
 
   private restore(blob: SaveBlob): boolean {
-    if (blob.v !== 1 && blob.v !== CURRENT_VERSION) {
+    if (blob.v !== 1 && blob.v !== 2 && blob.v !== CURRENT_VERSION) {
       console.warn(`[save] unknown save version: ${blob.v}`);
       return false;
     }

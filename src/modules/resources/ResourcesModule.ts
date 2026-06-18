@@ -40,6 +40,19 @@ interface ResourcesState {
   agentMultPerResource: Record<string, number>;
   /** Multiplier applied to every resource (Planners). 1.0 = no boost. */
   agentGlobalMult: number;
+  /**
+   * Direct agent production: units of `resourceId` produced per real second
+   * per agent of that archetype. Composed by AgentsModule each tick from
+   * the trained population × research `agentProduction` effects. Read by
+   * BuildingsModule when it composes the final rate per resource.
+   */
+  agentProduction: Record<string, number>;
+  /**
+   * Bonus added on top of the static cap (if any) for resources that have
+   * a soft cap. Populated by ResearchModule via `resourceCapBonus`. Read in
+   * tick() to keep amounts inside the (possibly raised) cap.
+   */
+  capBonuses: Record<string, number>;
 }
 
 export class ResourcesModule implements GameModule {
@@ -50,6 +63,8 @@ export class ResourcesModule implements GameModule {
     rates: { compute: 0, data: 0, capital: 0, alignment: 0 },
     agentMultPerResource: {},
     agentGlobalMult: 1,
+    agentProduction: {},
+    capBonuses: {},
   };
 
   init(_game: Game): void {
@@ -63,7 +78,8 @@ export class ResourcesModule implements GameModule {
       if (rate === 0) continue;
       let next = current + rate * dt;
       if (def.cap !== undefined) {
-        next = Math.max(0, Math.min(def.cap, next));
+        const cap = def.cap + (this.state.capBonuses[def.id] ?? 0);
+        next = Math.max(0, Math.min(cap, next));
       } else {
         next = Math.max(0, next);
       }
@@ -101,6 +117,36 @@ export class ResourcesModule implements GameModule {
   /** Global additive multiplier from meta-agents (Planners). 1.0 = none. */
   getAgentGlobalMult(): number {
     return this.state.agentGlobalMult;
+  }
+
+  /**
+   * Replace the agent production table (units per second per resource).
+   * Called by AgentsModule each tick.
+   */
+  setAgentProduction(production: Record<string, number>): void {
+    this.state.agentProduction = { ...production };
+  }
+
+  /** Read the current agent production rate for a resource. */
+  getAgentProduction(id: string): number {
+    return this.state.agentProduction[id] ?? 0;
+  }
+
+  /**
+   * Add a bonus to a capped resource's maximum. Idempotent if you want a
+   * stable, additive effect (the research module accumulates and passes
+   * the total). The cap is exposed in tick() above.
+   */
+  setCapBonus(id: string, bonus: number): void {
+    if (bonus <= 0) {
+      delete this.state.capBonuses[id];
+    } else {
+      this.state.capBonuses[id] = bonus;
+    }
+  }
+
+  getCapBonus(id: string): number {
+    return this.state.capBonuses[id] ?? 0;
   }
 
   add(id: string, amount: number): void {

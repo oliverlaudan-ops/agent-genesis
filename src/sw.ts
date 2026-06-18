@@ -37,6 +37,7 @@ const SHELL_PATHS = ['/', '/manifest.webmanifest'];
 // WorkerGlobalScope. We use a type assertion to bridge the lib split.
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 self.addEventListener('install', (event: any) => {
   event.waitUntil(
     caches
@@ -46,6 +47,7 @@ self.addEventListener('install', (event: any) => {
   );
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 self.addEventListener('activate', (event: any) => {
   event.waitUntil(
     (async () => {
@@ -56,6 +58,7 @@ self.addEventListener('activate', (event: any) => {
   );
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 self.addEventListener('fetch', (event: any) => {
   const req = event.request as Request;
 

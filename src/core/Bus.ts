@@ -27,6 +27,10 @@ export type EventMap = {
   'agent:created': { id: string; count: number };
   'agent:trained': { id: string; progress: number };
 
+  // research
+  'research:purchased': { id: string; rank: number };
+  'research:unlocked': { id: string };
+
   // meta
   prestige: { layer: string; gained: number };
 };

@@ -10,6 +10,7 @@
 import type { Game } from '@core/Game';
 import type { GameModule } from '@core/GameModule';
 import { ResourcesModule } from '@modules/resources';
+import type { ResearchModule } from '@modules/research';
 
 export interface BuildingDef {
   id: string;
@@ -56,6 +57,24 @@ export const BUILDING_DEFS: BuildingDef[] = [
     produces: { resourceId: 'alignment', amount: 0.005 },
     unlockAt: 3,
   },
+  {
+    id: 'data-warehouse',
+    name: 'Data Warehouse',
+    description: 'Bulk storage + reprocessing pipelines. Late-game data scaling.',
+    baseCost: { capital: 30, compute: 20 },
+    costMultiplier: 1.22,
+    produces: { resourceId: 'data', amount: 1.2 },
+    unlockAt: 4,
+  },
+  {
+    id: 'compute-cluster',
+    name: 'Compute Cluster',
+    description: 'Hyperscale GPU farm. Capital-hungry compute monster.',
+    baseCost: { capital: 80, data: 40, compute: 30 },
+    costMultiplier: 1.3,
+    produces: { resourceId: 'compute', amount: 2.5 },
+    unlockAt: 6,
+  },
 ];
 
 interface BuildingsState {
@@ -67,6 +86,7 @@ export class BuildingsModule implements GameModule {
 
   private state: BuildingsState = { counts: {} };
   private resources!: ResourcesModule;
+  private research?: ResearchModule;
 
   init(game: Game): void {
     const res = game.modules.get('resources');
@@ -74,6 +94,12 @@ export class BuildingsModule implements GameModule {
       throw new Error('BuildingsModule requires ResourcesModule to be registered first');
     }
     this.resources = res;
+    // ResearchModule is optional — registered after us in main.ts and may
+    // not exist in early tests. Use a duck-typed lookup.
+    const r = game.modules.get('research');
+    if (r && typeof (r as ResearchModule).getEffect === 'function') {
+      this.research = r as ResearchModule;
+    }
   }
 
   tick(_dt: number): void {
@@ -83,7 +109,11 @@ export class BuildingsModule implements GameModule {
       const count = this.state.counts[def.id] ?? 0;
       if (count === 0) continue;
       const rid = def.produces.resourceId;
-      totals[rid] = (totals[rid] ?? 0) + def.produces.amount * count;
+      // Apply research multiplier per building.
+      const research = this.research
+        ? this.research.getEffect('buildingRateMult', def.id)
+        : 1;
+      totals[rid] = (totals[rid] ?? 0) + def.produces.amount * count * research;
     }
 
     // Compose with base rates + agent-derived multipliers. AgentsModule
@@ -96,12 +126,23 @@ export class BuildingsModule implements GameModule {
     for (const def of RESOURCE_DEFS_FLAT) {
       const base = (totals[def.id] ?? 0) + def.baseRate;
       const perRes = 1 + this.resources.getAgentMultFor(def.id);
-      this.resources.setRate(def.id, base * perRes * globalMult);
+      const agentProd = this.resources.getAgentProduction(def.id);
+      this.resources.setRate(
+        def.id,
+        (base + agentProd) * perRes * globalMult,
+      );
     }
   }
 
   count(id: string): number {
     return this.state.counts[id] ?? 0;
+  }
+
+  /** Sum of all building counts. Used by ResearchModule for unlock gates. */
+  totalBuildings(): number {
+    let total = 0;
+    for (const c of Object.values(this.state.counts)) total += c;
+    return total;
   }
 
   costFor(def: BuildingDef): Partial<Record<string, number>> {
