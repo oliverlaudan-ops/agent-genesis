@@ -191,6 +191,21 @@ export class ResearchModule implements GameModule {
     return out;
   }
 
+  /** Reset current-run research ranks (prestige realignment). */
+  resetRun(): void {
+    this.state.ranks = {};
+    this.syncStaticEffects();
+  }
+
+  /** Total purchased research ranks across all nodes. */
+  totalRanks(): number {
+    let total = 0;
+    for (const rank of Object.values(this.state.ranks)) {
+      total += rank ?? 0;
+    }
+    return total;
+  }
+
   /** Attempt to purchase the next rank. Returns true on success. */
   purchase(id: string): boolean {
     const node = RESEARCH_DEFS.find((n) => n.id === id);

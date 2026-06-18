@@ -7,6 +7,8 @@
  * Save format is a single versioned blob:
  *   v1: { v: 1, savedAt, modules: { resources, buildings, agents } }
  *   v2: adds 'viz' to modules (cloud particle counts per archetype)
+ *   v3: adds 'research' module.
+ *   v4: adds 'prestige' module.
  *
  * Each module owns its own slice via `serialize()` / `deserialize()`. The
  * SaveManager just shuttles bytes in and out.
@@ -14,7 +16,7 @@
 import type { Game } from './Game';
 
 const STORAGE_KEY = 'agent-genesis:save:v1';
-const CURRENT_VERSION = 3 as const;
+const CURRENT_VERSION = 4 as const;
 
 export interface SaveBlob {
   v: number;
@@ -35,7 +37,12 @@ export class SaveManager {
   }
 
   private restore(blob: SaveBlob): boolean {
-    if (blob.v !== 1 && blob.v !== 2 && blob.v !== CURRENT_VERSION) {
+    if (
+      blob.v !== 1 &&
+      blob.v !== 2 &&
+      blob.v !== 3 &&
+      blob.v !== CURRENT_VERSION
+    ) {
       console.warn(`[save] unknown save version: ${blob.v}`);
       return false;
     }

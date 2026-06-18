@@ -87,8 +87,10 @@ export class BuildingsModule implements GameModule {
   private state: BuildingsState = { counts: {} };
   private resources!: ResourcesModule;
   private research?: ResearchModule;
+  private gameRef?: Game;
 
   init(game: Game): void {
+    this.gameRef = game;
     const res = game.modules.get('resources');
     if (!(res instanceof ResourcesModule)) {
       throw new Error('BuildingsModule requires ResourcesModule to be registered first');
@@ -100,6 +102,13 @@ export class BuildingsModule implements GameModule {
     if (r && typeof (r as ResearchModule).getEffect === 'function') {
       this.research = r as ResearchModule;
     }
+  }
+
+  private prestigeGlobalMult(): number {
+    const p = this.gameRef?.modules.get('prestige') as
+      | { globalProductionMult: () => number }
+      | undefined;
+    return p?.globalProductionMult() ?? 1;
   }
 
   tick(_dt: number): void {
@@ -123,13 +132,14 @@ export class BuildingsModule implements GameModule {
     // here, which is fine — there is at most one tick of latency on the
     // multiplier, invisible in practice.
     const globalMult = this.resources.getAgentGlobalMult();
+    const prestigeMult = this.prestigeGlobalMult();
     for (const def of RESOURCE_DEFS_FLAT) {
       const base = (totals[def.id] ?? 0) + def.baseRate;
       const perRes = 1 + this.resources.getAgentMultFor(def.id);
       const agentProd = this.resources.getAgentProduction(def.id);
       this.resources.setRate(
         def.id,
-        (base + agentProd) * perRes * globalMult,
+        (base + agentProd) * perRes * globalMult * prestigeMult,
       );
     }
   }
@@ -143,6 +153,11 @@ export class BuildingsModule implements GameModule {
     let total = 0;
     for (const c of Object.values(this.state.counts)) total += c;
     return total;
+  }
+
+  /** Reset current-run building counts (prestige realignment). */
+  resetRun(): void {
+    this.state.counts = {};
   }
 
   costFor(def: BuildingDef): Partial<Record<string, number>> {

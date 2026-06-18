@@ -33,6 +33,10 @@ export type EventMap = {
 
   // meta
   prestige: { layer: string; gained: number };
+
+  // prestige
+  'prestige:realign': { insightGained: number; totalInsight: number };
+  'prestige:insightChanged': { total: number; delta: number };
 };
 
 type Handler<T> = (payload: T) => void;
