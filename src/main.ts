@@ -9,10 +9,12 @@ import { Game } from '@core/Game';
 import { ResourcesModule } from '@modules/resources';
 import { BuildingsModule } from '@modules/buildings';
 import { AgentsModule } from '@modules/agents';
+import { ResearchModule } from '@modules/research';
 import { VizModule } from '@viz/VizModule';
 import { renderStatsBar } from '@ui/statsBar';
 import { renderBuildingPanel } from '@ui/buildingPanel';
 import { renderAgentPanel } from '@ui/agentPanel';
+import { renderResearchPanel } from '@ui/researchPanel';
 import { renderControls } from '@ui/controls';
 
 // Service Worker registration. Only in production builds — Vite's HMR client
@@ -44,6 +46,8 @@ function isMobile(): boolean {
 interface PanelLayout {
   /** Hosts the (desktop) buildings panel. */
   buildingHost: HTMLElement;
+  /** Hosts the (desktop) research panel. */
+  researchHost: HTMLElement;
   /** Hosts the (desktop) agents panel. */
   rightPanel: HTMLElement;
   /** Hosts the (desktop) controls panel. */
@@ -60,7 +64,7 @@ function buildDesktopLayout(): PanelLayout {
   const root = document.getElementById('game-root')!;
   const app = document.getElementById('app')!;
   root.innerHTML = '';
-  root.style.gridTemplateColumns = '280px 1fr 320px';
+  root.style.gridTemplateColumns = '300px 1fr 320px';
   root.style.gridTemplateRows = '1fr';
 
   // Stats bar lives between header and game-root, full-width. It is inserted
@@ -76,6 +80,13 @@ function buildDesktopLayout(): PanelLayout {
   const leftPanel = document.createElement('section');
   leftPanel.className = 'panel';
   leftPanel.id = 'left-panel';
+  leftPanel.style.display = 'flex';
+  leftPanel.style.flexDirection = 'column';
+  leftPanel.style.gap = '20px';
+
+  const buildingHost = document.createElement('div');
+  const researchHost = document.createElement('div');
+  leftPanel.append(buildingHost, researchHost);
 
   const vizPanel = document.createElement('section');
   vizPanel.className = 'panel';
@@ -92,7 +103,8 @@ function buildDesktopLayout(): PanelLayout {
 
   return {
     statsBar,
-    buildingHost: leftPanel,
+    buildingHost,
+    researchHost,
     rightPanel,
     controlsHost: rightPanel,
     canvas,
@@ -121,7 +133,7 @@ function buildMobileLayout(): PanelLayout {
   canvas.id = 'viz-canvas';
   vizPanel.appendChild(canvas);
 
-  // Tabbed panel — Buildings, Agents, Controls. (Resources live in the
+  // Tabbed panel — Buildings, Agents, Research, Controls. (Resources live in the
   // stats bar above the viz, so they don't need a tab.)
   const tabbedPanel = document.createElement('section');
   tabbedPanel.className = 'panel';
@@ -132,6 +144,7 @@ function buildMobileLayout(): PanelLayout {
   const tabDefs = [
     { id: 'buildings', label: 'Buildings' },
     { id: 'agents', label: 'Agents' },
+    { id: 'research', label: 'Research' },
     { id: 'controls', label: 'Controls' },
   ];
   for (const t of tabDefs) {
@@ -173,6 +186,7 @@ function buildMobileLayout(): PanelLayout {
   return {
     statsBar,
     buildingHost: wrappers.buildings,
+    researchHost: wrappers.research,
     rightPanel: wrappers.agents,
     controlsHost: wrappers.controls,
     canvas,
@@ -193,6 +207,7 @@ function setupLayout(layoutKind: Layout): void {
 // ---------------------------------------------------------------------------
 const game = new Game();
 game.register(new ResourcesModule());
+game.register(new ResearchModule()); // Register before Buildings/Agents so they can query it during tick
 game.register(new AgentsModule());
 game.register(new BuildingsModule());
 game.register(new VizModule(panelLayout.canvas));
@@ -203,6 +218,7 @@ const saveStatusEl = document.getElementById('save-status')!;
 function renderAllPanels(): void {
   renderStatsBar(panelLayout.statsBar, game);
   renderBuildingPanel(panelLayout.buildingHost, game);
+  renderResearchPanel(panelLayout.researchHost, game);
   renderAgentPanel(panelLayout.rightPanel, game);
   renderControls(panelLayout.controlsHost, game, saveStatusEl);
 }

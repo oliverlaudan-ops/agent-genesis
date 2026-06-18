@@ -78,7 +78,7 @@ npm run typecheck
 - [x] v0.1 — Core loop, resources, buildings, agents, particle viz, save/load/export
 - [x] v0.1.1 — PWA (manifest, icons, service worker, installable)
 - [x] v0.1.2 — Mobile responsive layout (tabbed panel under viz on small screens)
-- [ ] v0.2 — Research tree, more buildings, agent production wiring
+- [x] v0.2 — Research tree, more buildings, agent production wiring
 - [ ] v0.3 — Prestige layer (Realignment)
 - [ ] v0.4 — Achievements + statistics
 - [ ] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
