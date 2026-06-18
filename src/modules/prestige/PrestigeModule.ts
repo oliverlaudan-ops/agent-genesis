@@ -127,7 +127,7 @@ export class PrestigeModule implements GameModule {
     });
 
     // Persist immediately so the reset state survives the page reload.
-    this.gameRef?.save.saveLocal();
+    this.gameRef?.save?.saveLocal();
     return true;
   }
 
