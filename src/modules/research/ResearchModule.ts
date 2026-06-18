@@ -270,5 +270,7 @@ export class ResearchModule implements GameModule {
     if (typeof data !== 'object' || data === null) return;
     const d = data as Partial<ResearchState>;
     if (d.ranks) this.state.ranks = { ...d.ranks };
+    // Re-apply static effects (e.g. alignment cap bonus) after loading.
+    this.syncStaticEffects();
   }
 }
