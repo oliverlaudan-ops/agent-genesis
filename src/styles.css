@@ -41,6 +41,10 @@ body {
   user-select: none;
 }
 
+:root {
+  --bad: #ef4444;
+}
+
 #app {
   display: grid;
   grid-template-rows: auto auto 1fr auto;

@@ -6,6 +6,9 @@
  */
 import type { Game } from '@core/Game';
 import { PrestigeModule } from '@modules/prestige';
+import { BuildingsModule } from '@modules/buildings';
+import { ResourcesModule } from '@modules/resources';
+import { ResearchModule } from '@modules/research';
 
 export function renderPrestigePanel(host: HTMLElement, game: Game): void {
   const prestige = game.modules.get('prestige') as PrestigeModule | undefined;
@@ -115,12 +118,21 @@ export function renderPrestigePanel(host: HTMLElement, game: Game): void {
   const gained = prestige.insightGainedOnRealign();
   const allowed = prestige.realignAllowed();
 
+  const buildings = game.modules.get('buildings') as BuildingsModule | undefined;
+  const resources = game.modules.get('resources') as ResourcesModule | undefined;
+  const research = game.modules.get('research') as ResearchModule | undefined;
+  const totalBuildings = buildings?.totalBuildings() ?? 0;
+  const capBonus = resources?.getCapBonus('alignment') ?? 0;
+  const ethicalRanks = research?.rank('ethical-oversight') ?? 0;
+
   insightValue.textContent = insight.toLocaleString();
   multiplierValue.textContent = `×${multiplier.toFixed(2)}`;
   headStartValue.textContent = `Data ${headStart.data.toLocaleString()} · Compute ${headStart.compute.toLocaleString()}`;
   gainedValue.textContent = `+${gained.toLocaleString()}`;
   realignBtn.disabled = !allowed;
-  requirementNote.textContent = allowed
+  const buildingOk = totalBuildings >= 50;
+  const alignmentOk = capBonus > 0.0001 || ethicalRanks > 0;
+  requirementNote.innerHTML = allowed
     ? 'Ready to realign. Progress converts into permanent Insight.'
-    : 'Requires 50+ buildings and positive Alignment progress to realign.';
+    : `<span style="color:${buildingOk ? 'var(--good)' : 'var(--bad)'}">Buildings ${totalBuildings}/50</span> · <span style="color:${alignmentOk ? 'var(--good)' : 'var(--bad)'}">Alignment bonus ${capBonus.toFixed(2)}</span>`;
 }
