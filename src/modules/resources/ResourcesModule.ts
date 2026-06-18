@@ -55,20 +55,60 @@ interface ResourcesState {
   capBonuses: Record<string, number>;
 }
 
+interface HeadStartBonus {
+  data: number;
+  compute: number;
+}
+
 export class ResourcesModule implements GameModule {
   readonly id = 'resources';
 
-  private state: ResourcesState = {
-    amounts: { compute: 50, data: 25, capital: 10, alignment: 0.5 },
-    rates: { compute: 0, data: 0, capital: 0, alignment: 0 },
-    agentMultPerResource: {},
-    agentGlobalMult: 1,
-    agentProduction: {},
-    capBonuses: {},
-  };
+  private state!: ResourcesState;
+  private initialAmounts = { compute: 50, data: 25, capital: 10, alignment: 0.5 };
+  private gameRef?: Game;
 
-  init(_game: Game): void {
-    // nothing to wire right now; future: hook into bus for derived stats
+  /**
+   * Reset the current run (used by prestige realignment). Keeps prestige
+   * insight intact by reading it from the prestige module again and applying
+   * the current head-start bonus.
+   */
+  resetRun(): void {
+    let headStart: HeadStartBonus = { data: 0, compute: 0 };
+    const p = this.gameRef?.modules.get('prestige');
+    const prestigeLike = p as unknown as { headStartBonus?: () => HeadStartBonus } | undefined;
+    if (prestigeLike && typeof prestigeLike.headStartBonus === 'function') {
+      headStart = prestigeLike.headStartBonus();
+    }
+    this.state.amounts = {
+      compute: this.initialAmounts.compute + (headStart.compute ?? 0),
+      data: this.initialAmounts.data + (headStart.data ?? 0),
+      capital: this.initialAmounts.capital,
+      alignment: this.initialAmounts.alignment,
+    };
+    this.state.rates = { compute: 0, data: 0, capital: 0, alignment: 0 };
+    this.state.agentMultPerResource = {};
+    this.state.agentGlobalMult = 1;
+    this.state.agentProduction = {};
+  }
+
+  init(game: Game): void {
+    this.gameRef = game;
+    this.state = {
+      amounts: { compute: 50, data: 25, capital: 10, alignment: 0.5 },
+      rates: { compute: 0, data: 0, capital: 0, alignment: 0 },
+      agentMultPerResource: {},
+      agentGlobalMult: 1,
+      agentProduction: {},
+      capBonuses: {},
+    };
+    // Apply prestige head-start bonus if a prestige module is registered.
+    const p = game.modules?.get('prestige');
+    const prestigeLike = p as unknown as { headStartBonus?: () => HeadStartBonus } | undefined;
+    if (prestigeLike && typeof prestigeLike.headStartBonus === 'function') {
+      const bonus = prestigeLike.headStartBonus();
+      this.state.amounts.compute += bonus.compute ?? 0;
+      this.state.amounts.data += bonus.data ?? 0;
+    }
   }
 
   tick(dt: number): void {

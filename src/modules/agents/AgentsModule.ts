@@ -212,6 +212,12 @@ export class AgentsModule implements GameModule {
     this.resources.setAgentProduction(production);
   }
 
+  /** Reset current-run agents (prestige realignment). */
+  resetRun(): void {
+    this.state.population = { reasoner: 0, coder: 0, vision: 0, planner: 0 };
+    this.state.trainingProgress = { reasoner: 0, coder: 0, vision: 0, planner: 0 };
+  }
+
   population(id: AgentArchetype): number {
     return this.state.population[id] ?? 0;
   }

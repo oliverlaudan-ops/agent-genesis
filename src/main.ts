@@ -7,6 +7,7 @@
 import './styles.css';
 import { Game } from '@core/Game';
 import { ResourcesModule } from '@modules/resources';
+import { PrestigeModule } from '@modules/prestige';
 import { BuildingsModule } from '@modules/buildings';
 import { AgentsModule } from '@modules/agents';
 import { ResearchModule } from '@modules/research';
@@ -16,6 +17,7 @@ import { renderBuildingPanel } from '@ui/buildingPanel';
 import { renderAgentPanel } from '@ui/agentPanel';
 import { renderResearchPanel } from '@ui/researchPanel';
 import { renderControls } from '@ui/controls';
+import { renderPrestigePanel } from '@ui/prestigePanel';
 
 // Service Worker registration. Only in production builds — Vite's HMR client
 // would otherwise intercept the fetch in dev. import.meta.env.PROD inlines to
@@ -52,6 +54,8 @@ interface PanelLayout {
   rightPanel: HTMLElement;
   /** Hosts the (desktop) controls panel. */
   controlsHost: HTMLElement;
+  /** Hosts the prestige panel on desktop (below controls). */
+  prestigeHost: HTMLElement;
   /** The canvas element. */
   canvas: HTMLCanvasElement;
   /** The viz panel wrapping the canvas. */
@@ -98,6 +102,15 @@ function buildDesktopLayout(): PanelLayout {
   const rightPanel = document.createElement('section');
   rightPanel.className = 'panel';
   rightPanel.id = 'right-panel';
+  rightPanel.style.display = 'flex';
+  rightPanel.style.flexDirection = 'column';
+  rightPanel.style.gap = '20px';
+
+  const controlsHost = document.createElement('div');
+  rightPanel.appendChild(controlsHost);
+
+  const prestigeHost = document.createElement('div');
+  rightPanel.appendChild(prestigeHost);
 
   root.append(leftPanel, vizPanel, rightPanel);
 
@@ -106,7 +119,8 @@ function buildDesktopLayout(): PanelLayout {
     buildingHost,
     researchHost,
     rightPanel,
-    controlsHost: rightPanel,
+    controlsHost,
+    prestigeHost,
     canvas,
     vizPanel,
   };
@@ -133,7 +147,7 @@ function buildMobileLayout(): PanelLayout {
   canvas.id = 'viz-canvas';
   vizPanel.appendChild(canvas);
 
-  // Tabbed panel — Buildings, Agents, Research, Controls. (Resources live in the
+  // Tabbed panel — Buildings, Agents, Research, Controls, Prestige. (Resources live in the
   // stats bar above the viz, so they don't need a tab.)
   const tabbedPanel = document.createElement('section');
   tabbedPanel.className = 'panel';
@@ -146,6 +160,7 @@ function buildMobileLayout(): PanelLayout {
     { id: 'agents', label: 'Agents' },
     { id: 'research', label: 'Research' },
     { id: 'controls', label: 'Controls' },
+    { id: 'prestige', label: 'Prestige' },
   ];
   for (const t of tabDefs) {
     const btn = document.createElement('button');
@@ -189,6 +204,7 @@ function buildMobileLayout(): PanelLayout {
     researchHost: wrappers.research,
     rightPanel: wrappers.agents,
     controlsHost: wrappers.controls,
+    prestigeHost: wrappers.prestige,
     canvas,
     vizPanel,
   };
@@ -207,6 +223,7 @@ function setupLayout(layoutKind: Layout): void {
 // ---------------------------------------------------------------------------
 const game = new Game();
 game.register(new ResourcesModule());
+game.register(new PrestigeModule()); // Before Buildings/Agents/Research so they can query prestige during init
 game.register(new ResearchModule()); // Register before Buildings/Agents so they can query it during tick
 game.register(new AgentsModule());
 game.register(new BuildingsModule());
@@ -221,6 +238,7 @@ function renderAllPanels(): void {
   renderResearchPanel(panelLayout.researchHost, game);
   renderAgentPanel(panelLayout.rightPanel, game);
   renderControls(panelLayout.controlsHost, game, saveStatusEl);
+  renderPrestigePanel(panelLayout.prestigeHost, game);
 }
 
 game.bus.on('tick', (dt) => {
