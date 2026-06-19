@@ -3,6 +3,19 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6] — 2026-06-19
+
+### Added
+- **WebGL particle renderer** — replaced the vanilla Canvas2D visualization with a WebGL-based point-sprite renderer.
+- **Instanced particle rendering** — supports many more particles with smoother glow and better mobile performance.
+- **Vertex-shader motion patterns** — all four archetype motions (`orbit`, `drift`, `pulse`, `spiral`) are now computed on the GPU.
+- **Transparent Canvas2D fallback** — when WebGL is unavailable, the renderer automatically falls back to the previous Canvas2D implementation.
+- New files `src/viz/WebGLViz.ts`, `src/viz/shaders.ts`, and `src/viz/fallbackCanvasViz.ts`.
+
+### Changed
+- `src/viz/VizModule.ts` now delegates to `WebGLViz` while keeping the same public `GameModule` interface.
+- Bundle size grew slightly (≈8 kB gzip) due to the new shader/buffer code, but runtime particle performance improves significantly.
+
 ## [v0.5] — 2026-06-19
 
 ### Added
