@@ -364,8 +364,15 @@ export class WebGLViz {
   private renderer: WebGLRenderer | FallbackCanvasViz;
   private fallbackActivated = false;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, preferFallback = false) {
     this.canvas = canvas;
+    if (preferFallback) {
+      console.info('[WebGLViz] touch/mobile device detected, using Canvas2D renderer');
+      this.renderer = new FallbackCanvasViz(canvas);
+      this.fallbackActivated = true;
+      return;
+    }
+
     try {
       this.renderer = new WebGLRenderer(canvas);
       this.attachContextListeners();

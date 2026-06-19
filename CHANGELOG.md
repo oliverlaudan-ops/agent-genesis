@@ -3,6 +3,12 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6.2] — 2026-06-19
+
+### Fixed
+- **Mobile black screen persists on some devices** — since the v0.6.1 WebGL fixes did not resolve the issue on all smartphones, the game now defaults to the proven Canvas2D renderer on touch devices. WebGL remains active on desktop where it was working correctly.
+- Added `preferFallback` option to `WebGLViz`; `VizModule` selects Canvas2D when `ontouchstart` or `navigator.maxTouchPoints` indicates a touch-capable device.
+
 ## [v0.6.1] — 2026-06-19
 
 ### Fixed

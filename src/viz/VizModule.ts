@@ -21,6 +21,11 @@ interface Cloud {
   trainingPhase: number;
 }
 
+function isTouchDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
 export class VizModule implements GameModule {
   readonly id = 'viz';
 
@@ -29,7 +34,7 @@ export class VizModule implements GameModule {
   private resizeHandler: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new WebGLViz(canvas);
+    this.renderer = new WebGLViz(canvas, isTouchDevice());
     this.resizeHandler = () => this.renderer.resize();
   }
 
