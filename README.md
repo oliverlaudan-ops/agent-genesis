@@ -79,7 +79,8 @@ npm run typecheck
 - [x] v0.1.1 — PWA (manifest, icons, service worker, installable)
 - [x] v0.1.2 — Mobile responsive layout (tabbed panel under viz on small screens)
 - [x] v0.2 — Research tree, more buildings, agent production wiring
-- [ ] v0.3 — Prestige layer (Realignment)
+- [x] v0.3 — Prestige layer (Realignment)
+- [x] v0.3.1 — Prestige usability & stability patch
 - [ ] v0.4 — Achievements + statistics
 - [ ] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
 - [ ] v0.6 — WebGL particle upgrade
