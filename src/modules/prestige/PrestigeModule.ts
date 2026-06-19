@@ -11,6 +11,7 @@ import type { AgentsModule } from '@modules/agents';
 import type { BuildingsModule } from '@modules/buildings';
 import type { ResearchModule } from '@modules/research';
 import type { ResourcesModule } from '@modules/resources';
+import { AchievementsModule } from '@modules/achievements';
 
 export interface PrestigeNodeDef {
   id: string;
@@ -52,6 +53,7 @@ export class PrestigeModule implements GameModule {
   private modules: ModulesLike = {};
   private bus!: Game['bus'];
   private gameRef?: Game;
+  private achievements?: AchievementsModule;
 
   init(game: Game): void {
     this.gameRef = game;
@@ -76,6 +78,11 @@ export class PrestigeModule implements GameModule {
     if (resources && typeof (resources as ResourcesModule).getCapBonus === 'function') {
       this.modules.resources = resources as ResourcesModule;
     }
+
+    const achievements = game.modules.get('achievements');
+    if (achievements && typeof (achievements as AchievementsModule).bonusFor === 'function') {
+      this.achievements = achievements as AchievementsModule;
+    }
   }
 
   tick(): void {
@@ -92,7 +99,11 @@ export class PrestigeModule implements GameModule {
     const totalResearchRanks = this.modules.research?.totalRanks?.() ?? 0;
     const totalAgents = this.modules.agents?.totalPopulation() ?? 0;
     const totalBuildings = this.modules.buildings?.totalBuildings() ?? 0;
-    return Math.floor(totalResearchRanks * 0.5 + totalAgents * 0.2 + totalBuildings * 0.1);
+    const base = Math.floor(totalResearchRanks * 0.5 + totalAgents * 0.2 + totalBuildings * 0.1);
+    const achievementMult = this.achievements
+      ? this.achievements.bonusFor('insightGain')
+      : 1;
+    return Math.floor(base * achievementMult);
   }
 
   /** Whether the current run can be converted into insight. */

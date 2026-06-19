@@ -3,6 +3,28 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.4] — 2026-06-19
+
+### Added
+- **Statistics module** — tracks lifetime and per-run aggregates: playtime, total resources produced/spent, buildings bought, agents trained, research ranks purchased, realignments, peak resource amounts, and max agents/buildings owned at once.
+- **Achievements module** — 10 unlockable milestones with small permanent bonuses:
+  - `First Steps` — +2% training speed
+  - `Data Miner` — +5% Data production
+  - `Capital Flow` — +5% Capital production
+  - `Compute Rush` — +5% Compute production
+  - `Alignment Aware` — +5% Alignment production
+  - `Swarm` — +5% agent boost multiplier
+  - `City of Racks` — +5% building production
+  - `Researcher` — -5% research cost
+  - `Realignment` — +10% insight gain
+  - `Omniscient` — +10% global production
+- **Stats & Achievements panel** — new desktop panel and mobile tab showing lifetime stats, unlocked/locked achievements, and active bonus effects.
+- New bus event `achievement:unlocked` emitted when a milestone is reached.
+- New bus event `resource:changed` now emitted on every material resource change (production, spending, manual add), consumed by the statistics module.
+
+### Changed
+- Resources, Buildings, Agents, Research, and Prestige modules now consume achievement bonuses where applicable.
+
 ## [v0.3.1] — 2026-06-19
 
 Usability & stability patch after the v0.3 prestige release.

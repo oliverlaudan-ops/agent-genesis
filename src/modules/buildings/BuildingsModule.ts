@@ -10,6 +10,7 @@
 import type { Game } from '@core/Game';
 import type { GameModule } from '@core/GameModule';
 import { ResourcesModule } from '@modules/resources';
+import { AchievementsModule } from '@modules/achievements';
 import type { ResearchModule } from '@modules/research';
 
 export interface BuildingDef {
@@ -87,10 +88,14 @@ export class BuildingsModule implements GameModule {
   private state: BuildingsState = { counts: {} };
   private resources!: ResourcesModule;
   private research?: ResearchModule;
+  private achievements?: AchievementsModule;
   private gameRef?: Game;
+
+  private bus!: Game['bus'];
 
   init(game: Game): void {
     this.gameRef = game;
+    this.bus = game.bus;
     const res = game.modules.get('resources');
     if (!(res instanceof ResourcesModule)) {
       throw new Error('BuildingsModule requires ResourcesModule to be registered first');
@@ -101,6 +106,11 @@ export class BuildingsModule implements GameModule {
     const r = game.modules.get('research');
     if (r && typeof (r as ResearchModule).getEffect === 'function') {
       this.research = r as ResearchModule;
+    }
+
+    const a = game.modules.get('achievements');
+    if (a && typeof (a as AchievementsModule).bonusFor === 'function') {
+      this.achievements = a as AchievementsModule;
     }
   }
 
@@ -133,13 +143,22 @@ export class BuildingsModule implements GameModule {
     // multiplier, invisible in practice.
     const globalMult = this.resources.getAgentGlobalMult();
     const prestigeMult = this.prestigeGlobalMult();
+    const buildingBonus = this.achievements
+      ? this.achievements.bonusFor('buildingRate')
+      : 1;
+    const globalProductionBonus = this.achievements
+      ? this.achievements.bonusFor('globalProduction')
+      : 1;
     for (const def of RESOURCE_DEFS_FLAT) {
       const base = (totals[def.id] ?? 0) + def.baseRate;
       const perRes = 1 + this.resources.getAgentMultFor(def.id);
       const agentProd = this.resources.getAgentProduction(def.id);
+      const resourceAchievementMult = this.achievements
+        ? this.achievements.bonusFor('resourceRate', def.id)
+        : 1;
       this.resources.setRate(
         def.id,
-        (base + agentProd) * perRes * globalMult * prestigeMult,
+        (base + agentProd) * perRes * globalMult * prestigeMult * buildingBonus * globalProductionBonus * resourceAchievementMult,
       );
     }
   }
@@ -184,6 +203,7 @@ export class BuildingsModule implements GameModule {
     const cost = this.costFor(def);
     if (!this.resources.spend(cost)) return false;
     this.state.counts[defId] = (this.state.counts[defId] ?? 0) + 1;
+    this.bus.emit('building:purchased', { id: defId, count: this.state.counts[defId] });
     return true;
   }
 

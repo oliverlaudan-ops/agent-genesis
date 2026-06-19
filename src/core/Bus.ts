@@ -38,6 +38,9 @@ export type EventMap = {
   // prestige
   'prestige:realign': { insightGained: number; totalInsight: number };
   'prestige:insightChanged': { total: number; delta: number };
+
+  // achievements
+  'achievement:unlocked': { id: string; name: string };
 };
 
 type Handler<T> = (payload: T) => void;

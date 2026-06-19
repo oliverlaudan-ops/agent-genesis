@@ -9,6 +9,7 @@
  * the research module decoupled from buildings/agents — they just ask
  * `getEffect('buildingRateMult', buildingId)` etc.
  */
+import { AchievementsModule } from '@modules/achievements';
 import type { Game } from '@core/Game';
 import type { GameModule } from '@core/GameModule';
 import { ResourcesModule } from '@modules/resources';
@@ -133,6 +134,7 @@ export class ResearchModule implements GameModule {
   private resources!: ResourcesModule;
   private bus!: Game['bus'];
   private game!: Game;
+  private achievements?: AchievementsModule;
 
   init(game: Game): void {
     const res = game.modules.get('resources');
@@ -142,6 +144,11 @@ export class ResearchModule implements GameModule {
     this.resources = res;
     this.bus = game.bus;
     this.game = game;
+
+    const a = game.modules.get('achievements');
+    if (a && typeof (a as AchievementsModule).bonusFor === 'function') {
+      this.achievements = a as AchievementsModule;
+    }
 
     // Initial sync of static effects like resource caps.
     this.syncStaticEffects();
@@ -184,9 +191,12 @@ export class ResearchModule implements GameModule {
 
   costFor(node: ResearchNode): Partial<Record<string, number>> {
     const owned = this.rank(node.id);
+    const costMult = this.achievements
+      ? this.achievements.bonusFor('researchCost')
+      : 1;
     const out: Partial<Record<string, number>> = {};
     for (const [rid, base] of Object.entries(node.baseCost)) {
-      out[rid] = Math.ceil((base ?? 0) * Math.pow(node.costMultiplier, owned));
+      out[rid] = Math.ceil((base ?? 0) * Math.pow(node.costMultiplier, owned) * costMult);
     }
     return out;
   }

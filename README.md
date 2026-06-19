@@ -46,10 +46,14 @@ src/
 ├── core/           # Game engine, Bus, SaveManager
 ├── modules/        # Independent gameplay modules
 │   ├── resources/  # Compute, Data, Capital, Alignment
-│   ├── buildings/  # Data Mine, GPU Rack, Alignment Lab
-│   └── agents/     # Reasoner, Coder, Vision, Planner
+│   ├── buildings/  # Data Mine, GPU Rack, Alignment Lab, ...
+│   ├── agents/     # Reasoner, Coder, Vision, Planner
+│   ├── research/   # Rank-based technology tree
+│   ├── prestige/   # Realignment meta-progression
+│   ├── stats/      # Lifetime and per-run statistics
+│   └── achievements/ # Milestones with permanent bonuses
 ├── viz/            # Canvas particle system (one cloud per agent type)
-├── ui/             # Pure-render panels (resources, buildings, agents, controls)
+├── ui/             # Pure-render panels
 └── main.ts         # Entry point — composes modules
 ```
 
@@ -81,7 +85,8 @@ npm run typecheck
 - [x] v0.2 — Research tree, more buildings, agent production wiring
 - [x] v0.3 — Prestige layer (Realignment)
 - [x] v0.3.1 — Prestige usability & stability patch
-- [ ] v0.4 — Achievements + statistics
+- [x] v0.4 — Achievements + statistics
+- [ ] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
 - [ ] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
 - [ ] v0.6 — WebGL particle upgrade
 - [ ] v1.0 — Polish, balance, tutorial

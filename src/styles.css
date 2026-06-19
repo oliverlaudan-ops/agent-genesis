@@ -404,6 +404,83 @@ button.primary:hover:not(:disabled) {
   }
 }
 
+.achievement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+  opacity: 0.6;
+}
+
+.achievement-item.unlocked {
+  background: rgba(74, 222, 128, 0.08);
+  border-color: var(--good);
+  opacity: 1;
+}
+
+.achievement-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.achievement-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.achievement-title {
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.achievement-desc {
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+
+.achievement-bonus {
+  font-size: 11px;
+  color: var(--good);
+  margin-top: 2px;
+}
+
+.achievements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-elev);
+  border-radius: var(--radius);
+  font-size: 12px;
+}
+
+.stat-label {
+  color: var(--fg-dim);
+}
+
+.stat-value {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Mobile tab strip + tab content visibility. */
 .mobile-tabs {
   display: none;

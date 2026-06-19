@@ -65,6 +65,7 @@ export class ResourcesModule implements GameModule {
 
   private state!: ResourcesState;
   private initialAmounts = { compute: 50, data: 25, capital: 10, alignment: 0.5 };
+  private bus!: Game['bus'];
   private gameRef?: Game;
 
   /**
@@ -93,6 +94,7 @@ export class ResourcesModule implements GameModule {
 
   init(game: Game): void {
     this.gameRef = game;
+    this.bus = game.bus;
     this.state = {
       amounts: { compute: 50, data: 25, capital: 10, alignment: 0.5 },
       rates: { compute: 0, data: 0, capital: 0, alignment: 0 },
@@ -123,7 +125,11 @@ export class ResourcesModule implements GameModule {
       } else {
         next = Math.max(0, next);
       }
+      const delta = next - current;
       this.state.amounts[def.id] = next;
+      if (Math.abs(delta) > 0) {
+        this.bus?.emit('resource:changed', { id: def.id, amount: next, delta });
+      }
     }
   }
 
@@ -192,10 +198,15 @@ export class ResourcesModule implements GameModule {
   add(id: string, amount: number): void {
     const def = RESOURCE_DEFS.find((r) => r.id === id);
     if (!def) return;
-    let next = (this.state.amounts[id] ?? 0) + amount;
+    const current = this.state.amounts[id] ?? 0;
+    let next = current + amount;
     if (def.cap !== undefined) next = Math.max(0, Math.min(def.cap, next));
     else next = Math.max(0, next);
+    const delta = next - current;
     this.state.amounts[id] = next;
+    if (Math.abs(delta) > 0) {
+      this.bus?.emit('resource:changed', { id, amount: next, delta });
+    }
   }
 
   /** Returns true if the player can afford the cost, then *deducts* atomically. */
@@ -204,7 +215,10 @@ export class ResourcesModule implements GameModule {
       if ((this.state.amounts[id] ?? 0) < (amt ?? 0)) return false;
     }
     for (const [id, amt] of Object.entries(cost)) {
-      this.state.amounts[id] = (this.state.amounts[id] ?? 0) - (amt ?? 0);
+      const current = this.state.amounts[id] ?? 0;
+      const next = current - (amt ?? 0);
+      this.state.amounts[id] = next;
+      this.bus?.emit('resource:changed', { id, amount: next, delta: -(amt ?? 0) });
     }
     return true;
   }

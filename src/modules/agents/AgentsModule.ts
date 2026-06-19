@@ -11,6 +11,7 @@
 import type { Game } from '@core/Game';
 import type { GameModule } from '@core/GameModule';
 import { ResourcesModule } from '@modules/resources';
+import { AchievementsModule } from '@modules/achievements';
 import type { ResearchModule } from '@modules/research';
 
 export type AgentArchetype = 'reasoner' | 'coder' | 'vision' | 'planner';
@@ -116,6 +117,7 @@ export class AgentsModule implements GameModule {
   private resources!: ResourcesModule;
   private bus!: Game['bus'];
   private research?: ResearchModule;
+  private achievements?: AchievementsModule;
 
   init(game: Game): void {
     const res = game.modules.get('resources');
@@ -128,6 +130,11 @@ export class AgentsModule implements GameModule {
     if (r && typeof (r as ResearchModule).getEffect === 'function') {
       this.research = r as ResearchModule;
     }
+
+    const a = game.modules.get('achievements');
+    if (a && typeof (a as AchievementsModule).bonusFor === 'function') {
+      this.achievements = a as AchievementsModule;
+    }
   }
 
   tick(dt: number): void {
@@ -139,7 +146,10 @@ export class AgentsModule implements GameModule {
         const speedMult = this.research
           ? this.research.trainingSpeedMult(def.id)
           : 1;
-        const p = this.state.trainingProgress[def.id] + dt / def.trainingTime / speedMult;
+        const achievementMult = this.achievements
+          ? this.achievements.bonusFor('trainingSpeed')
+          : 1;
+        const p = this.state.trainingProgress[def.id] + dt / def.trainingTime / speedMult / achievementMult;
         if (p >= 1) {
           this.state.trainingProgress[def.id] = 0;
           this.state.population[def.id] += 1;
@@ -183,10 +193,13 @@ export class AgentsModule implements GameModule {
     const boostAmp = this.research
       ? this.research.getEffect('agentBoostMult', '*')
       : 1;
+    const achievementBoostAmp = this.achievements
+      ? this.achievements.bonusFor('agentBoost')
+      : 1;
     for (const rid of Object.keys(perResource)) {
-      perResource[rid] = (perResource[rid] ?? 0) * boostAmp;
+      perResource[rid] = (perResource[rid] ?? 0) * boostAmp * achievementBoostAmp;
     }
-    globalMult = 1 + (globalMult - 1) * boostAmp;
+    globalMult = 1 + (globalMult - 1) * boostAmp * achievementBoostAmp;
 
     this.resources.setAgentBoosts(perResource, globalMult);
 

@@ -11,6 +11,8 @@ import { PrestigeModule } from '@modules/prestige';
 import { BuildingsModule } from '@modules/buildings';
 import { AgentsModule } from '@modules/agents';
 import { ResearchModule } from '@modules/research';
+import { StatsModule } from '@modules/stats';
+import { AchievementsModule } from '@modules/achievements';
 import { VizModule } from '@viz/VizModule';
 import { renderStatsBar } from '@ui/statsBar';
 import { renderBuildingPanel } from '@ui/buildingPanel';
@@ -18,6 +20,7 @@ import { renderAgentPanel } from '@ui/agentPanel';
 import { renderResearchPanel } from '@ui/researchPanel';
 import { renderControls } from '@ui/controls';
 import { renderPrestigePanel } from '@ui/prestigePanel';
+import { renderStatsAchievementsPanel } from '@ui/statsAchievementsPanel';
 
 // Service Worker registration. Only in production builds — Vite's HMR client
 // would otherwise intercept the fetch in dev. import.meta.env.PROD inlines to
@@ -56,6 +59,8 @@ interface PanelLayout {
   controlsHost: HTMLElement;
   /** Hosts the prestige panel on desktop (below controls). */
   prestigeHost: HTMLElement;
+  /** Hosts the stats & achievements panel on desktop (below prestige). */
+  statsAchievementsHost: HTMLElement;
   /** The canvas element. */
   canvas: HTMLCanvasElement;
   /** The viz panel wrapping the canvas. */
@@ -115,6 +120,12 @@ function buildDesktopLayout(): PanelLayout {
   prestigeHost.style.overflowY = 'auto';
   rightPanel.appendChild(prestigeHost);
 
+  const statsAchievementsHost = document.createElement('div');
+  statsAchievementsHost.style.flex = '1 1 auto';
+  statsAchievementsHost.style.minHeight = '0';
+  statsAchievementsHost.style.overflowY = 'auto';
+  rightPanel.appendChild(statsAchievementsHost);
+
   root.append(leftPanel, vizPanel, rightPanel);
 
   return {
@@ -124,6 +135,7 @@ function buildDesktopLayout(): PanelLayout {
     rightPanel,
     controlsHost,
     prestigeHost,
+    statsAchievementsHost,
     canvas,
     vizPanel,
   };
@@ -164,6 +176,7 @@ function buildMobileLayout(): PanelLayout {
     { id: 'research', label: 'Research' },
     { id: 'controls', label: 'Controls' },
     { id: 'prestige', label: 'Prestige' },
+    { id: 'stats', label: 'Stats' },
   ];
   for (const t of tabDefs) {
     const btn = document.createElement('button');
@@ -208,6 +221,7 @@ function buildMobileLayout(): PanelLayout {
     rightPanel: wrappers.agents,
     controlsHost: wrappers.controls,
     prestigeHost: wrappers.prestige,
+    statsAchievementsHost: wrappers.stats,
     canvas,
     vizPanel,
   };
@@ -228,6 +242,8 @@ const game = new Game();
 game.register(new ResourcesModule());
 game.register(new PrestigeModule()); // Before Buildings/Agents/Research so they can query prestige during init
 game.register(new ResearchModule()); // Register before Buildings/Agents so they can query it during tick
+game.register(new StatsModule()); // Tracks lifetime stats for achievements
+game.register(new AchievementsModule()); // Provides permanent bonuses for milestones
 game.register(new AgentsModule());
 game.register(new BuildingsModule());
 game.register(new VizModule(panelLayout.canvas));
@@ -242,6 +258,7 @@ function renderAllPanels(): void {
   renderAgentPanel(panelLayout.rightPanel, game);
   renderControls(panelLayout.controlsHost, game, saveStatusEl);
   renderPrestigePanel(panelLayout.prestigeHost, game);
+  renderStatsAchievementsPanel(panelLayout.statsAchievementsHost, game);
 }
 
 game.bus.on('tick', (dt) => {
