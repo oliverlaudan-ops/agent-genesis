@@ -3,6 +3,12 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6.3] — 2026-06-19
+
+### Added
+- **Settings module** — persists player preferences such as the experimental WebGL toggle.
+- **WebGL experimental toggle** — touch-device users can now enable WebGL manually from the Controls panel. The game still defaults to the safe Canvas2D renderer on mobile; the setting is saved and requires a reload to apply.
+
 ## [v0.6.2] — 2026-06-19
 
 ### Fixed

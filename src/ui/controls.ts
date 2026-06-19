@@ -3,6 +3,7 @@
  * Lives at the bottom of the right column.
  */
 import type { Game } from '@core/Game';
+import { SettingsModule } from '@modules/settings';
 
 export function renderControls(host: HTMLElement, game: Game, statusEl: HTMLElement): void {
   let container = host.querySelector<HTMLElement>('.controls-panel');
@@ -55,8 +56,40 @@ export function renderControls(host: HTMLElement, game: Game, statusEl: HTMLElem
     resetBtn.style.color = 'var(--bad)';
     container.appendChild(resetBtn);
 
+    const settings = game.modules.get('settings') as SettingsModule | undefined;
+    if (settings && isTouchDevice()) {
+      const webglRow = document.createElement('div');
+      webglRow.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;';
+
+      const label = document.createElement('label');
+      label.textContent = 'Enable experimental WebGL';
+      label.style.cursor = 'pointer';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = settings.webglEnabled;
+      checkbox.addEventListener('change', () => {
+        settings.setWebglEnabled(checkbox.checked);
+        game.saveNow();
+        flash(
+          statusEl,
+          checkbox.checked ? 'WebGL enabled — reload to apply' : 'WebGL disabled — reload to apply',
+          'var(--warn)',
+        );
+      });
+
+      label.prepend(checkbox);
+      webglRow.appendChild(label);
+      container.appendChild(webglRow);
+    }
+
     host.appendChild(container);
   }
+}
+
+function isTouchDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
 function mkBtn(label: string, onClick: () => void): HTMLButtonElement {

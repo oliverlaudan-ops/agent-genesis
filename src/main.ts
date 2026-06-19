@@ -14,6 +14,7 @@ import { ResearchModule } from '@modules/research';
 import { StatsModule } from '@modules/stats';
 import { AchievementsModule } from '@modules/achievements';
 import { EpochModule } from '@modules/epoch';
+import { SettingsModule } from '@modules/settings';
 import { VizModule } from '@viz/VizModule';
 import { renderStatsBar } from '@ui/statsBar';
 import { renderBuildingPanel } from '@ui/buildingPanel';
@@ -246,6 +247,7 @@ game.register(new ResearchModule()); // Register before Buildings/Agents so they
 game.register(new StatsModule()); // Tracks lifetime stats for achievements
 game.register(new AchievementsModule()); // Provides permanent bonuses for milestones
 game.register(new EpochModule()); // Per-archetype circular progression and run-internal bonuses
+game.register(new SettingsModule()); // Player preferences (e.g. experimental WebGL)
 game.register(new AgentsModule());
 game.register(new BuildingsModule());
 game.register(new VizModule(panelLayout.canvas));

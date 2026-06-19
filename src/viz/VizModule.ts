@@ -11,6 +11,7 @@
 import type { Game } from '@core/Game';
 import type { GameModule } from '@core/GameModule';
 import { type AgentArchetype, type AgentDef } from '@modules/agents';
+import { SettingsModule } from '@modules/settings';
 import { WebGLViz } from './WebGLViz';
 
 interface Cloud {
@@ -32,14 +33,21 @@ export class VizModule implements GameModule {
   private renderer: WebGLViz;
   private bus!: Game['bus'];
   private resizeHandler: () => void;
+  private canvas: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new WebGLViz(canvas, isTouchDevice());
+    this.canvas = canvas;
+    this.renderer = new WebGLViz(canvas, false); // default; init updates based on settings
     this.resizeHandler = () => this.renderer.resize();
   }
 
   init(game: Game): void {
     this.bus = game.bus;
+
+    const settings = game.modules.get('settings') as SettingsModule | undefined;
+    const preferFallback = !settings?.webglEnabled && isTouchDevice();
+    this.renderer = new WebGLViz(this.canvas, preferFallback);
+
     this.renderer.resize();
     window.addEventListener('resize', this.resizeHandler);
     this.renderer.initClouds();
