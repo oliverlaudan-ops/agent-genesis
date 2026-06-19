@@ -398,7 +398,17 @@ export class WebGLViz {
     this.fallbackActivated = true;
     const offset = this.renderer.getRafOffset();
     const clouds = this.renderer.getClouds();
-    this.renderer = new FallbackCanvasViz(this.canvas);
+
+    // WebGL has consumed the canvas surface; create a fresh element so 2D
+    // can claim it. Copy the visible identity over from the old element.
+    const fresh = document.createElement('canvas');
+    fresh.id = this.canvas.id;
+    fresh.className = this.canvas.className;
+    fresh.style.cssText = this.canvas.style.cssText;
+    this.canvas.parentNode?.replaceChild(fresh, this.canvas);
+    this.canvas = fresh;
+
+    this.renderer = new FallbackCanvasViz(fresh);
     this.renderer.setRafOffset(offset);
     // Carry over current cloud counts so the switch is seamless.
     const targetMap = new Map<AgentArchetype, number>();

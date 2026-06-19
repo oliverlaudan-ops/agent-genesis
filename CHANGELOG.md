@@ -3,6 +3,12 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6.5] — 2026-06-19
+
+### Fixed
+- **Runtime WebGL fallback now swaps the canvas element** so the Canvas2D renderer can claim a fresh surface after WebGL context loss.
+- Improved touch-device detection with `pointer: coarse` media query in addition to `maxTouchPoints` / `ontouchstart`.
+
 ## [v0.6.4] — 2026-06-19
 
 ### Fixed
