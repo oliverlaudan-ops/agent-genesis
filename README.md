@@ -86,7 +86,8 @@ npm run typecheck
 - [x] v0.3 — Prestige layer (Realignment)
 - [x] v0.3.1 — Prestige usability & stability patch
 - [x] v0.4 — Achievements + statistics
-- [ ] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
+- [x] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
+- [ ] v0.6 — WebGL particle upgrade
 - [ ] v0.5 — Epoch Wheel (RevIdle-inspired per-agent progression)
 - [ ] v0.6 — WebGL particle upgrade
 - [ ] v1.0 — Polish, balance, tutorial

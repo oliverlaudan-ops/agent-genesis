@@ -490,6 +490,28 @@ button.primary:hover:not(:disabled) {
   padding-bottom: 6px;
 }
 
+/* ----------------------------------------------------------------------------
+   Epoch Wheel (v0.5)
+   ----------------------------------------------------------------------------
+   Circular SVG progress indicator used inside each agent card. The progress
+   arc uses the agent archetype color inline; these classes handle base
+   styling and the neutral background ring. */
+.epoch-wheel {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  color: var(--fg-dim);
+}
+
+.epoch-wheel-bg {
+  opacity: 0.35;
+}
+
+.epoch-wheel-progress {
+  transition: stroke-dashoffset 0.2s linear;
+}
+
+
 .mobile-tabs button {
   flex: 1;
   font-size: 10px;

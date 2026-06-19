@@ -8,6 +8,7 @@ import { AGENT_DEFS } from '@modules/agents';
 import { AgentsModule } from '@modules/agents';
 import { ResourcesModule } from '@modules/resources';
 import { RESOURCE_DEFS } from '@modules/resources';
+import { renderEpochWheel } from '@ui/epochWheel';
 
 export function renderAgentPanel(host: HTMLElement, game: Game): void {
   const ag = game.modules.get('agents') as AgentsModule | undefined;
@@ -41,6 +42,21 @@ export function renderAgentPanel(host: HTMLElement, game: Game): void {
       <div class="title">${def.name} <span style="float:right;color:var(--accent)">×${pop}</span></div>
       <div class="meta">${def.description}</div>
     `;
+
+    // Epoch wheel slot sits between description and the boost badge.
+    const epochSlot = document.createElement('div');
+    epochSlot.className = 'epoch-wheel-slot';
+    epochSlot.style.cssText = 'display:flex;justify-content:flex-end;margin:-4px 0 2px 0;';
+    const epochWheel = document.createElement('div');
+    epochWheel.className = 'epoch-wheel-container';
+    epochSlot.appendChild(epochWheel);
+    card.appendChild(epochSlot);
+
+    // Render if the epoch module is available; otherwise leave the slot
+    // empty for backwards compatibility during parallel work.
+    if (game.modules.get('epoch')) {
+      renderEpochWheel(epochWheel, def.id, game);
+    }
 
     // Boost badge: shows the current effective multiplier for this agent's
     // target. Stays visible at all times so the player can see at a glance

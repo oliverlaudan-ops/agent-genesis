@@ -41,6 +41,10 @@ export type EventMap = {
 
   // achievements
   'achievement:unlocked': { id: string; name: string };
+
+  // epoch
+  'epoch:completed': { archetype: string; count: number; bonus: { kind: string; resourceId?: string; value: number } };
+  'epoch:progress': { archetype: string; progress: number; population: number; epochs: number };
 };
 
 type Handler<T> = (payload: T) => void;

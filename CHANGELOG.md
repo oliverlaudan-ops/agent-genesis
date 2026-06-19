@@ -3,6 +3,20 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.5] — 2026-06-19
+
+### Added
+- **Epoch Wheel system** — each agent archetype has its own circular progress wheel (RevIdle-inspired). The more agents of that archetype exist, the faster the wheel fills.
+- **Epoch rewards** — every completed revolution grants a run-long bonus:
+  - Reasoner: +1% Compute boost per epoch
+  - Coder: +1% Capital boost per epoch
+  - Vision: +0.5% Alignment cap per epoch
+  - Planner: +1% global agent boost per epoch
+- **EpochModule** (`src/modules/epoch/`) — tracks per-archetype progress, completed epochs, and bonus multipliers; resets on Realignment.
+- **Epoch Wheel UI** — circular SVG progress ring rendered on each agent card between description and boost badge, showing current epoch number and color-coded by archetype.
+- New bus events `epoch:progress` and `epoch:completed`.
+- AgentsModule consumes epoch bonuses when composing agent boosts.
+
 ## [v0.4] — 2026-06-19
 
 ### Added
