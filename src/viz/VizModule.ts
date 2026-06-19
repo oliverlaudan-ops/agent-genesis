@@ -13,6 +13,7 @@ import type { GameModule } from '@core/GameModule';
 import { type AgentArchetype, type AgentDef } from '@modules/agents';
 import { SettingsModule } from '@modules/settings';
 import { WebGLViz } from './WebGLViz';
+import { NullViz } from './NullViz';
 
 interface Cloud {
   def: AgentDef;
@@ -34,14 +35,13 @@ function isTouchDevice(): boolean {
 export class VizModule implements GameModule {
   readonly id = 'viz';
 
-  private renderer: WebGLViz;
+  private canvas: HTMLCanvasElement;
+  private renderer!: WebGLViz | NullViz;
   private bus!: Game['bus'];
   private resizeHandler: () => void;
-  private canvas: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.renderer = new WebGLViz(canvas, false); // default; init updates based on settings
     this.resizeHandler = () => this.renderer.resize();
   }
 
@@ -49,8 +49,15 @@ export class VizModule implements GameModule {
     this.bus = game.bus;
 
     const settings = game.modules.get('settings') as SettingsModule | undefined;
-    const preferFallback = !settings?.webglEnabled && isTouchDevice();
-    this.renderer = new WebGLViz(this.canvas, preferFallback);
+    const forceWebgl = settings?.webglEnabled ?? false;
+    const preferFallback = !forceWebgl && isTouchDevice();
+
+    try {
+      this.renderer = new WebGLViz(this.canvas, preferFallback);
+    } catch (err) {
+      console.warn('[VizModule] failed to create renderer, using null renderer:', err);
+      this.renderer = new NullViz(this.canvas);
+    }
 
     this.renderer.resize();
     window.addEventListener('resize', this.resizeHandler);

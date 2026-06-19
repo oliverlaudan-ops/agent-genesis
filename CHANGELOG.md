@@ -3,6 +3,13 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6.6] — 2026-06-19
+
+### Fixed
+- **Tabs still empty / "2D Canvas context not available"** — moved renderer creation from the VizModule constructor into `init()` so the canvas is fully part of the DOM before any context is requested.
+- Added `NullViz` last-resort renderer: if neither WebGL nor Canvas2D can be created, the game continues without particle visuals instead of crashing with a blank UI.
+- VizModule now catches renderer creation failures and falls back to NullViz, keeping the tabs and controls responsive.
+
 ## [v0.6.5] — 2026-06-19
 
 ### Fixed

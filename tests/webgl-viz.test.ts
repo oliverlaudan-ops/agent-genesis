@@ -35,10 +35,17 @@ describe('WebGL viz scaffolding', () => {
     expect((viz as unknown as { renderer: unknown }).renderer).toBeInstanceOf(FallbackCanvasViz);
   });
 
-  it('VizModule instantiates even when the canvas has no WebGL context', () => {
+  it('VizModule instantiates even when the canvas has no WebGL context', async () => {
     const canvas = makeCanvas();
     const module = new VizModule(canvas);
     expect(module.id).toBe('viz');
+
+    const game = new Game();
+    game.register(new ResourcesModule());
+    game.register(new AgentsModule());
+    game.register(module);
+    await game.boot();
+
     expect((module as unknown as { renderer: WebGLViz }).renderer.isFallback()).toBe(true);
   });
 
