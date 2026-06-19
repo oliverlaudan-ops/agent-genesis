@@ -17,6 +17,7 @@ export const vertexShaderSource = /* glsl */ `
   attribute vec3 aColor;
 
   uniform vec2 uCenter;
+  uniform vec2 uResolution;
   uniform float uTime;
   uniform float uBaseSize;
   uniform float uPopulation;
@@ -60,19 +61,22 @@ export const vertexShaderSource = /* glsl */ `
     vAlpha = min(1.0, aAlpha + 0.3 * uTrainingPulse);
     vColor = aColor;
 
-    // Map CSS-pixel coordinates to clip space. uCenter is the canvas centre,
-    // so pos / uCenter ranges from 0..2 around the centre.
+    // Map CSS-pixel coordinates to normalized clip space using the actual
+    // canvas resolution. uCenter is measured in CSS pixels; the previous
+    // division by uCenter produced wrong coordinates whenever the viewport
+    // was not exactly centered around the canvas origin (notably on mobile
+    // after resize / orientation change).
     vec2 clip = vec2(
-      (pos.x / uCenter.x) - 1.0,
-      -((pos.y / uCenter.y) - 1.0)
+      (pos.x / uResolution.x) * 2.0 - 1.0,
+      -((pos.y / uResolution.y) * 2.0 - 1.0)
     );
     gl_Position = vec4(clip, 0.0, 1.0);
-    gl_PointSize = aSize;
+    gl_PointSize = max(aSize, 2.0);
   }
 `;
 
 export const fragmentShaderSource = /* glsl */ `
-  precision mediump float;
+  precision highp float;
 
   varying vec3 vColor;
   varying float vAlpha;

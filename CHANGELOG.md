@@ -3,6 +3,15 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6.1] — 2026-06-19
+
+### Fixed
+- **Mobile black screen after WebGL deployment** — corrected clip-space coordinate calculation in the vertex shader so particles are not rendered outside the viewport on non-square / resized canvases.
+- **Robust WebGL fallback** — if the WebGL context is lost or a runtime draw error occurs, the renderer now switches seamlessly to the Canvas2D fallback instead of staying black.
+- Avoid recreating the canvas/WebGL context when the viewport size hasn't actually changed, preventing context loss on mobile orientation changes.
+- Raised fragment shader precision to `highp` for better compatibility with mobile GPUs.
+- Ensured minimum point sprite size of 2 px for devices that clamp small points.
+
 ## [v0.6] — 2026-06-19
 
 ### Added

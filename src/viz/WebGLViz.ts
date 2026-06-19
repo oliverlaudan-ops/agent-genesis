@@ -52,6 +52,7 @@ interface WebGLProgramInfo {
   };
   uniformLocations: {
     uCenter: WebGLUniformLocation | null;
+    uResolution: WebGLUniformLocation | null;
     uTime: WebGLUniformLocation | null;
     uBaseSize: WebGLUniformLocation | null;
     uPopulation: WebGLUniformLocation | null;
@@ -107,6 +108,7 @@ class WebGLRenderer {
       },
       uniformLocations: {
         uCenter: gl.getUniformLocation(program, 'uCenter'),
+        uResolution: gl.getUniformLocation(program, 'uResolution'),
         uTime: gl.getUniformLocation(program, 'uTime'),
         uBaseSize: gl.getUniformLocation(program, 'uBaseSize'),
         uPopulation: gl.getUniformLocation(program, 'uPopulation'),
@@ -133,10 +135,18 @@ class WebGLRenderer {
   resize(): void {
     const rect = this.canvas.getBoundingClientRect();
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.canvas.width = Math.floor(rect.width * this.dpr);
-    this.canvas.height = Math.floor(rect.height * this.dpr);
+    const nextWidth = Math.max(1, Math.floor(rect.width * this.dpr));
+    const nextHeight = Math.max(1, Math.floor(rect.height * this.dpr));
+
+    // Avoid touching the canvas size if nothing changed; resetting the
+    // dimensions on mobile can destroy/recreate the WebGL context.
+    if (this.canvas.width === nextWidth && this.canvas.height === nextHeight) return;
+
+    this.canvas.width = nextWidth;
+    this.canvas.height = nextHeight;
     this.width = rect.width;
     this.height = rect.height;
+
     this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     this.initClouds();
   }
@@ -173,6 +183,10 @@ class WebGLRenderer {
   }
 
   private draw(): void {
+    if (this.gl.isContextLost()) {
+      throw new Error('WebGL context lost');
+    }
+
     const gl = this.gl;
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -182,6 +196,7 @@ class WebGLRenderer {
 
     gl.useProgram(this.programInfo.program);
     gl.uniform1f(this.programInfo.uniformLocations.uTime, this.rafOffset);
+    gl.uniform2f(this.programInfo.uniformLocations.uResolution, this.width, this.height);
 
     for (const cloud of this.clouds.values()) {
       cloud.currentCount += (cloud.targetCount - cloud.currentCount) * 0.05;
@@ -194,6 +209,12 @@ class WebGLRenderer {
       const pop = want / 6;
 
       this.drawCloud(cloud, want, baseSize, pop);
+    }
+
+    const err = gl.getError();
+    if (err !== gl.NO_ERROR) {
+      // Log once per error type; some mobile drivers report benign warnings.
+      console.warn('[WebGLViz] draw GL error:', err);
     }
   }
 
@@ -232,6 +253,7 @@ class WebGLRenderer {
     this.setBuffer(this.buffers.color, colors, this.programInfo.attribLocations.aColor, 3);
 
     gl.uniform2f(this.programInfo.uniformLocations.uCenter, cloud.cx, cloud.cy);
+    gl.uniform2f(this.programInfo.uniformLocations.uResolution, this.width, this.height);
     gl.uniform1f(this.programInfo.uniformLocations.uBaseSize, baseSize);
     gl.uniform1f(this.programInfo.uniformLocations.uPopulation, pop);
     gl.uniform1f(this.programInfo.uniformLocations.uTrainingPulse, pulseAmtForCloud(cloud));
@@ -338,14 +360,48 @@ function pulseAmtForCloud(cloud: Cloud): number {
  */
 export class WebGLViz {
   readonly id = 'viz';
+  private canvas: HTMLCanvasElement;
   private renderer: WebGLRenderer | FallbackCanvasViz;
+  private fallbackActivated = false;
 
   constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
     try {
       this.renderer = new WebGLRenderer(canvas);
+      this.attachContextListeners();
     } catch (err) {
       console.warn('[WebGLViz] WebGL initialization failed, falling back to Canvas2D:', err);
       this.renderer = new FallbackCanvasViz(canvas);
+      this.fallbackActivated = true;
+    }
+  }
+
+  private attachContextListeners(): void {
+    this.canvas.addEventListener('webglcontextlost', () => {
+      console.warn('[WebGLViz] WebGL context lost; switching to Canvas2D fallback');
+      this.activateFallback();
+    });
+    this.canvas.addEventListener('webglcontextrestored', () => {
+      console.warn('[WebGLViz] WebGL context restored, but staying on Canvas2D for stability');
+    });
+  }
+
+  private activateFallback(): void {
+    if (this.fallbackActivated) return;
+    this.fallbackActivated = true;
+    const offset = this.renderer.getRafOffset();
+    const clouds = this.renderer.getClouds();
+    this.renderer = new FallbackCanvasViz(this.canvas);
+    this.renderer.setRafOffset(offset);
+    // Carry over current cloud counts so the switch is seamless.
+    const targetMap = new Map<AgentArchetype, number>();
+    for (const [id, cloud] of clouds) {
+      targetMap.set(id, cloud.targetCount);
+    }
+    this.renderer.initClouds();
+    for (const [id, cloud] of this.renderer.getClouds()) {
+      cloud.targetCount = targetMap.get(id) ?? 0;
+      cloud.currentCount = cloud.targetCount;
     }
   }
 
@@ -370,13 +426,23 @@ export class WebGLViz {
   }
 
   tick(dt: number): void {
-    this.renderer.tick(dt);
+    try {
+      this.renderer.tick(dt);
+    } catch (err) {
+      if (this.renderer instanceof WebGLRenderer) {
+        console.warn('[WebGLViz] draw/runtime error, falling back to Canvas2D:', err);
+        this.activateFallback();
+        this.renderer.tick(dt);
+      } else {
+        throw err;
+      }
+    }
   }
 
   /**
-   * True when the fallback Canvas2D renderer is active (WebGL unavailable).
+   * True when the fallback Canvas2D renderer is active (WebGL unavailable or failed).
    */
   isFallback(): boolean {
-    return this.renderer instanceof FallbackCanvasViz;
+    return this.fallbackActivated || this.renderer instanceof FallbackCanvasViz;
   }
 }
