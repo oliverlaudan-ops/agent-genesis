@@ -3,6 +3,12 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [v0.6.4] — 2026-06-19
+
+### Fixed
+- **Mobile tabs show no content** — added defensive re-activation of the default tab after boot and a global error handler that surfaces JavaScript errors visibly (red banner) on devices without an accessible browser console.
+- `renderAllPanels` is now wrapped in try/catch; any panel-render failure will show an error message instead of silently leaving tabs blank.
+
 ## [v0.6.3] — 2026-06-19
 
 ### Added

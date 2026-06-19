@@ -35,6 +35,32 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   });
 }
 
+// Global error handler to surface runtime errors on mobile where the
+// browser console is hard to reach. Logs to the save-status footer element.
+function showFatalError(msg: string): void {
+  const el = document.getElementById('save-status');
+  if (el) {
+    el.textContent = msg;
+    el.style.color = 'var(--bad)';
+  }
+  // Also append a visible banner so it can't be missed.
+  const banner = document.createElement('div');
+  banner.textContent = msg;
+  banner.style.cssText =
+    'position:fixed;top:0;left:0;right:0;z-index:9999;background:#ef4444;color:#0b0d12;padding:12px;font-size:13px;text-align:center;';
+  document.body.appendChild(banner);
+}
+
+window.addEventListener('error', (e) => {
+  console.error('[global error]', e.error);
+  showFatalError(`Error: ${e.error?.message ?? String(e.error)}`);
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[unhandled rejection]', e.reason);
+  showFatalError(`Rejection: ${e.reason?.message ?? String(e.reason)}`);
+});
+
 const root = document.getElementById('game-root');
 if (!root) throw new Error('#game-root not found');
 
@@ -214,6 +240,13 @@ function buildMobileLayout(): PanelLayout {
   }
   activateTab('buildings');
 
+  // Defensive: ensure at least one tab is always active even if CSS/JS
+  // race conditions remove the active class.
+  setTimeout(() => {
+    const anyActive = tabbedPanel.querySelector('[data-tab].active');
+    if (!anyActive) activateTab('buildings');
+  }, 0);
+
   root.append(vizPanel, tabbedPanel);
 
   return {
@@ -256,13 +289,18 @@ const tickRateEl = document.getElementById('tick-rate')!;
 const saveStatusEl = document.getElementById('save-status')!;
 
 function renderAllPanels(): void {
-  renderStatsBar(panelLayout.statsBar, game);
-  renderBuildingPanel(panelLayout.buildingHost, game);
-  renderResearchPanel(panelLayout.researchHost, game);
-  renderAgentPanel(panelLayout.rightPanel, game);
-  renderControls(panelLayout.controlsHost, game, saveStatusEl);
-  renderPrestigePanel(panelLayout.prestigeHost, game);
-  renderStatsAchievementsPanel(panelLayout.statsAchievementsHost, game);
+  try {
+    renderStatsBar(panelLayout.statsBar, game);
+    renderBuildingPanel(panelLayout.buildingHost, game);
+    renderResearchPanel(panelLayout.researchHost, game);
+    renderAgentPanel(panelLayout.rightPanel, game);
+    renderControls(panelLayout.controlsHost, game, saveStatusEl);
+    renderPrestigePanel(panelLayout.prestigeHost, game);
+    renderStatsAchievementsPanel(panelLayout.statsAchievementsHost, game);
+  } catch (err) {
+    console.error('[renderAllPanels] panel render failed:', err);
+    showFatalError(`Render error: ${(err as Error).message}`);
+  }
 }
 
 game.bus.on('tick', (dt) => {
