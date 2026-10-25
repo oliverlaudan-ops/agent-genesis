@@ -13,6 +13,7 @@ import type { GameModule } from '@core/GameModule';
 import { ResourcesModule } from '@modules/resources';
 import { AchievementsModule } from '@modules/achievements';
 import type { ResearchModule } from '@modules/research';
+import type { EpochModule } from '@modules/epoch';
 
 export type AgentArchetype = 'reasoner' | 'coder' | 'vision' | 'planner';
 
@@ -118,6 +119,7 @@ export class AgentsModule implements GameModule {
   private bus!: Game['bus'];
   private research?: ResearchModule;
   private achievements?: AchievementsModule;
+  private epoch?: EpochModule;
 
   init(game: Game): void {
     const res = game.modules.get('resources');
@@ -126,6 +128,7 @@ export class AgentsModule implements GameModule {
     }
     this.resources = res;
     this.bus = game.bus;
+    this.epoch = game.modules.get('epoch') as EpochModule | undefined;
     const r = game.modules.get('research');
     if (r && typeof (r as ResearchModule).getEffect === 'function') {
       this.research = r as ResearchModule;
@@ -196,10 +199,12 @@ export class AgentsModule implements GameModule {
     const achievementBoostAmp = this.achievements
       ? this.achievements.bonusFor('agentBoost')
       : 1;
+    const epochGlobalAmp = this.epoch?.bonusFor('globalAgentBoost') ?? 1;
     for (const rid of Object.keys(perResource)) {
-      perResource[rid] = (perResource[rid] ?? 0) * boostAmp * achievementBoostAmp;
+      const epochAmp = this.epoch?.bonusFor('agentBoost', rid) ?? 1;
+      perResource[rid] = (perResource[rid] ?? 0) * boostAmp * achievementBoostAmp * epochAmp * epochGlobalAmp;
     }
-    globalMult = 1 + (globalMult - 1) * boostAmp * achievementBoostAmp;
+    globalMult = 1 + (globalMult - 1) * boostAmp * achievementBoostAmp * epochGlobalAmp;
 
     this.resources.setAgentBoosts(perResource, globalMult);
 

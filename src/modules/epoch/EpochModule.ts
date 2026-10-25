@@ -226,7 +226,7 @@ export class EpochModule implements GameModule {
 
   private applyAlignmentCapBonus(): void {
     if (!this.resources) return;
-    this.resources.setCapBonus('alignment', this.alignmentCapBonus());
+    this.resources.setCapBonus('alignment', this.alignmentCapBonus(), this.id);
   }
 
   serialize(): unknown {
