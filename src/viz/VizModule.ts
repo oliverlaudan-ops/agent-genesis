@@ -42,7 +42,7 @@ export class VizModule implements GameModule {
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.resizeHandler = () => this.renderer.resize();
+    this.resizeHandler = () => this.resize();
   }
 
   init(game: Game): void {
@@ -92,6 +92,11 @@ export class VizModule implements GameModule {
 
   tick(_dt: number): void {
     this.renderer.tick(_dt);
+  }
+
+  /** Refit the existing renderer after its canvas moves to another layout. */
+  resize(): void {
+    this.renderer.resize();
   }
 
   serialize(): unknown {

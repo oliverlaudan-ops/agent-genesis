@@ -97,7 +97,7 @@ interface PanelLayout {
   statsBar: HTMLElement;
 }
 
-function buildDesktopLayout(): PanelLayout {
+function buildDesktopLayout(canvas = document.createElement('canvas')): PanelLayout {
   const root = document.getElementById('game-root')!;
   const app = document.getElementById('app')!;
   root.innerHTML = '';
@@ -128,7 +128,6 @@ function buildDesktopLayout(): PanelLayout {
   const vizPanel = document.createElement('section');
   vizPanel.className = 'panel';
   vizPanel.id = 'viz-panel';
-  const canvas = document.createElement('canvas');
   canvas.id = 'viz-canvas';
   vizPanel.appendChild(canvas);
 
@@ -169,7 +168,7 @@ function buildDesktopLayout(): PanelLayout {
   };
 }
 
-function buildMobileLayout(): PanelLayout {
+function buildMobileLayout(canvas = document.createElement('canvas')): PanelLayout {
   const root = document.getElementById('game-root')!;
   const app = document.getElementById('app')!;
   root.innerHTML = '';
@@ -186,7 +185,6 @@ function buildMobileLayout(): PanelLayout {
   const vizPanel = document.createElement('section');
   vizPanel.className = 'panel';
   vizPanel.id = 'viz-panel';
-  const canvas = document.createElement('canvas');
   canvas.id = 'viz-canvas';
   vizPanel.appendChild(canvas);
 
@@ -266,8 +264,11 @@ let currentLayout: Layout = isMobile() ? 'mobile' : 'desktop';
 let panelLayout: PanelLayout = currentLayout === 'mobile' ? buildMobileLayout() : buildDesktopLayout();
 
 function setupLayout(layoutKind: Layout): void {
+  // WebGL fallback can replace the original canvas. Move the currently
+  // mounted surface so its renderer and in-progress cloud state survive.
+  const canvas = panelLayout.vizPanel.querySelector('canvas') ?? panelLayout.canvas;
   currentLayout = layoutKind;
-  panelLayout = layoutKind === 'mobile' ? buildMobileLayout() : buildDesktopLayout();
+  panelLayout = layoutKind === 'mobile' ? buildMobileLayout(canvas) : buildDesktopLayout(canvas);
 }
 
 // ---------------------------------------------------------------------------
@@ -283,7 +284,8 @@ game.register(new EpochModule()); // Per-archetype circular progression and run-
 game.register(new SettingsModule()); // Player preferences (e.g. experimental WebGL)
 game.register(new AgentsModule());
 game.register(new BuildingsModule());
-game.register(new VizModule(panelLayout.canvas));
+const viz = new VizModule(panelLayout.canvas);
+game.register(viz);
 
 const tickRateEl = document.getElementById('tick-rate')!;
 const saveStatusEl = document.getElementById('save-status')!;
@@ -317,12 +319,10 @@ const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
 mql.addEventListener('change', (e) => {
   const next: Layout = e.matches ? 'mobile' : 'desktop';
   if (next === currentLayout) return;
-  // Tear down before we throw away the canvas element. VizModule's rAF
-  // touches the canvas each frame; if we don't stop the game, it crashes
-  // when the element gets detached from the DOM.
+  // Pause while moving the existing canvas; keep the module registered once.
   game.stop();
   setupLayout(next);
-  game.register(new VizModule(panelLayout.canvas));
+  viz.resize();
   game.start();
   // Force a render so the new panels aren't blank until the next tick.
   renderAllPanels();

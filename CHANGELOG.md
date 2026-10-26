@@ -3,6 +3,13 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [Unreleased]
+
+### Fixed
+- Crossing the desktop/mobile breakpoint now moves the existing visualization canvas and resizes its renderer instead of registering a duplicate module and stopping the game.
+- Particle cloud state and gameplay progress survive repeated layout changes, including the Canvas2D and no-renderer fallbacks.
+- Added startup-to-layout-transition regression tests for both fallback paths.
+
 ## [v0.6.6] — 2026-06-19
 
 ### Fixed
