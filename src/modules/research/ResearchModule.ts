@@ -165,7 +165,7 @@ export class ResearchModule implements GameModule {
   private syncStaticEffects(): void {
     // Sync Alignment cap bonus.
     const alignmentBonus = this.getEffect('resourceCapBonus', 'alignment');
-    this.resources.setCapBonus('alignment', alignmentBonus);
+    this.resources.setCapBonus('alignment', alignmentBonus, this.id);
   }
 
   /** Whether the node is visible in the UI. */

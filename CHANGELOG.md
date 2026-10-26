@@ -9,6 +9,11 @@ Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby p
 - Crossing the desktop/mobile breakpoint now moves the existing visualization canvas and resizes its renderer instead of registering a duplicate module and stopping the game.
 - Particle cloud state and gameplay progress survive repeated layout changes, including the Canvas2D and no-renderer fallbacks.
 - Added startup-to-layout-transition regression tests for both fallback paths.
+- Reasoner and Coder epochs now amplify their resource boosts; Planner epochs amplify all agent boosts, including the Planner's global contribution.
+- Research and Vision epoch bonuses now add to the Alignment cap independently instead of overwriting one another. Ethical Oversight continues to satisfy the Alignment requirement for Realignment after game ticks.
+- Manual resource additions respect the increased Alignment cap, just like passive production.
+- Agent boost badges show the effective boost, including research, achievements, and epochs.
+- Added integration coverage for production, combined caps, save/load, and prestige resets using the gameplay module order.
 
 ## [v0.6.6] — 2026-06-19
 
