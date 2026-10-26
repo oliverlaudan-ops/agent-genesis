@@ -67,10 +67,12 @@ export function renderAgentPanel(host: HTMLElement, game: Game): void {
       ? 'all resources'
       : resourceName(def.boosts.resourceId);
     const perAgentPct = (def.boosts.multiplierPerAgent * 100).toFixed(0);
-    const effectiveMult = 1 + def.boosts.multiplierPerAgent * pop;
+    const effectiveMult = def.boosts.resourceId === '*'
+      ? res.getAgentGlobalMult()
+      : 1 + res.getAgentMultFor(def.boosts.resourceId);
     const effectivePct = ((effectiveMult - 1) * 100).toFixed(0);
     boostBadge.innerHTML = pop > 0
-      ? `<span class="boost-active">+${effectivePct}%</span> ${target} <span class="boost-detail">(${perAgentPct}%/pop · ×${pop})</span>`
+      ? `<span class="boost-active">+${effectivePct}%</span> ${target} <span class="boost-detail">(base ${perAgentPct}%/pop · ×${pop})</span>`
       : `<span class="boost-idle">+${perAgentPct}%/pop</span> ${target}`;
     card.appendChild(boostBadge);
 

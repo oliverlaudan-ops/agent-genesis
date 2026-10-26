@@ -67,6 +67,8 @@ export class ResourcesModule implements GameModule {
   private initialAmounts = { compute: 50, data: 25, capital: 10, alignment: 0.5 };
   private bus!: Game['bus'];
   private gameRef?: Game;
+  // Derived contributions are rebuilt by their owning modules on init/load.
+  private capBonusSources: Record<string, Record<string, number>> = {};
 
   /**
    * Reset the current run (used by prestige realignment). Keeps prestige
@@ -179,16 +181,17 @@ export class ResourcesModule implements GameModule {
   }
 
   /**
-   * Add a bonus to a capped resource's maximum. Idempotent if you want a
-   * stable, additive effect (the research module accumulates and passes
-   * the total). The cap is exposed in tick() above.
+   * Replace one source's contribution to a resource cap. Different sources
+   * add together; updating or clearing one never overwrites the others.
    */
-  setCapBonus(id: string, bonus: number): void {
+  setCapBonus(id: string, bonus: number, source = 'default'): void {
+    const sources = (this.capBonusSources[id] ??= {});
     if (bonus <= 0) {
-      delete this.state.capBonuses[id];
+      delete sources[source];
     } else {
-      this.state.capBonuses[id] = bonus;
+      sources[source] = bonus;
     }
+    this.state.capBonuses[id] = Object.values(sources).reduce((sum, value) => sum + value, 0);
   }
 
   getCapBonus(id: string): number {
@@ -200,8 +203,11 @@ export class ResourcesModule implements GameModule {
     if (!def) return;
     const current = this.state.amounts[id] ?? 0;
     let next = current + amount;
-    if (def.cap !== undefined) next = Math.max(0, Math.min(def.cap, next));
-    else next = Math.max(0, next);
+    if (def.cap !== undefined) {
+      next = Math.max(0, Math.min(def.cap + this.getCapBonus(id), next));
+    } else {
+      next = Math.max(0, next);
+    }
     const delta = next - current;
     this.state.amounts[id] = next;
     if (Math.abs(delta) > 0) {

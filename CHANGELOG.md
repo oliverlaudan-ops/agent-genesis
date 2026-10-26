@@ -3,6 +3,15 @@
 All notable changes to **Agent Genesis** are documented here.
 Releases follow [Semantic Versioning](https://semver.org/) loosely for a hobby project.
 
+## [Unreleased]
+
+### Fixed
+- Reasoner and Coder epochs now amplify their resource boosts; Planner epochs amplify all agent boosts, including the Planner's global contribution.
+- Research and Vision epoch bonuses now add to the Alignment cap independently instead of overwriting one another. Ethical Oversight continues to satisfy the Alignment requirement for Realignment after game ticks.
+- Manual resource additions respect the increased Alignment cap, just like passive production.
+- Agent boost badges show the effective boost, including research, achievements, and epochs.
+- Added integration coverage for production, combined caps, save/load, and prestige resets using the gameplay module order.
+
 ## [v0.6.6] — 2026-06-19
 
 ### Fixed
